@@ -1,6 +1,6 @@
 /*
-Plugin Name
-Copyright (C) <Year> <Developer> <Email Address>
+MixKey
+Copyright (C) 2026-present Steinberg Media Technologies GmbH
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
