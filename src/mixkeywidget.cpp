@@ -15,6 +15,7 @@
 #include <QWidget>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
+#include <plugin-support.h>
 
 namespace MixKey {
 
@@ -31,16 +32,68 @@ const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
 #endif
 
 //------------------------------------------------------------------------
-static bool enumSourcesCallback (void* /*data*/, obs_source_t* source)
+static int32_t addToFirstFreeMicAuxChannel (obs_source_t* source)
 {
-	const char* name = obs_source_get_name (source);
-	const char* id = obs_source_get_id (source);
-	blog (LOG_INFO, "Source: name='%s'  id='%s'", name, id);
-	return true;
+	if (!source)
+		return -1;
+
+	constexpr uint32_t firstMicAuxChannel = 3;
+	constexpr uint32_t lastMicAuxChannel = 6;
+
+	for (uint32_t channel = firstMicAuxChannel; channel <= lastMicAuxChannel; ++channel)
+	{
+		obs_source_t* existingSource = obs_get_output_source (channel);
+
+		if (!existingSource)
+		{
+			obs_set_output_source (channel, source);
+
+			obs_log (LOG_INFO, "MixKey: Added source '%s' to global Mic/Aux channel %u",
+			         obs_source_get_name (source), channel);
+
+			return channel;
+		}
+		obs_source_release (existingSource);
+	}
+
+	obs_log (LOG_WARNING, "MixKey: No free global Mic/Aux channel available");
+
+	return -1;
 }
 
 //------------------------------------------------------------------------
-static void inspectSourceProperties (obs_source_t* source)
+static int32_t streamChannelExists ()
+{
+	constexpr uint32_t firstMicAuxChannel = 3;
+	constexpr uint32_t lastMicAuxChannel = 6;
+	bool found = false;
+
+	for (uint32_t channel = firstMicAuxChannel; channel <= lastMicAuxChannel; ++channel)
+	{
+		obs_source_t* existingSource = obs_get_output_source (channel);
+		if (existingSource)
+		{
+			const char* name = obs_source_get_name (existingSource);
+			obs_data_t* settings = obs_source_get_settings (existingSource);
+
+			const char* deviceId = obs_data_get_string (settings, "device_id");
+
+			if (strcmp (deviceId, kSteinbergMixKeyStreamDeviceId) == 0 &&
+			    strcmp (name, "MixKey") == 0)
+				found = true;
+
+			obs_data_release (settings);
+		}
+		obs_source_release (existingSource);
+
+		if (found)
+			break;
+	}
+	return found;
+}
+
+//------------------------------------------------------------------------
+static void addStreamDeviceToSourceProperties (obs_source_t* source)
 {
 	obs_properties_t* props = obs_source_properties (source);
 	if (!props)
@@ -76,17 +129,15 @@ static void inspectSourceProperties (obs_source_t* source)
 //------------------------------------------------------------------------
 static void addSource ()
 {
-	obs_source_t* source = obs_source_create (kAudioInputCaptureSourceId, "Mixkey", 0, nullptr);
+	if (streamChannelExists ())
+		return;
+
+	obs_source_t* source = obs_source_create (kAudioInputCaptureSourceId, "MixKey", 0, nullptr);
 	if (!source)
 		return;
 
-	inspectSourceProperties (source);
-	obs_source_t* scene_source = obs_frontend_get_current_scene ();
-	if (!scene_source)
-		return;
-	obs_scene_t* scene = obs_scene_from_source (scene_source);
-	obs_scene_add (scene, source);
-	obs_source_release (source);
+	addStreamDeviceToSourceProperties (source);
+	addToFirstFreeMicAuxChannel (source);
 }
 
 //------------------------------------------------------------------------
@@ -106,7 +157,6 @@ void* createDocWidget ()
 	QPushButton* addButton = new QPushButton ();
 	QPushButton::connect (addButton, &QPushButton::pressed, [] () {
 		//
-		obs_enum_sources (enumSourcesCallback, nullptr);
 		addSource ();
 	});
 
