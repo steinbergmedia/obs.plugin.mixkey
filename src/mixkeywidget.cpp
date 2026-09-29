@@ -31,16 +31,19 @@ const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
 #error "Implement Me!"
 #endif
 
+static int32_t mixKeyChannelIndex = -1;
+
+constexpr uint32_t firstMicAuxChannelIndex =
+    3; // Obs' global Audio channels for Mic/Aux start at channelindex 3 and end at 6
+constexpr uint32_t lastMicAuxChannelIndex = 6;
+
 //------------------------------------------------------------------------
 static int32_t addToFirstFreeMicAuxChannel (obs_source_t* source)
 {
 	if (!source)
 		return -1;
 
-	constexpr uint32_t firstMicAuxChannel = 3;
-	constexpr uint32_t lastMicAuxChannel = 6;
-
-	for (uint32_t channel = firstMicAuxChannel; channel <= lastMicAuxChannel; ++channel)
+	for (uint32_t channel = firstMicAuxChannelIndex; channel <= lastMicAuxChannelIndex; ++channel)
 	{
 		obs_source_t* existingSource = obs_get_output_source (channel);
 
@@ -64,11 +67,9 @@ static int32_t addToFirstFreeMicAuxChannel (obs_source_t* source)
 //------------------------------------------------------------------------
 static int32_t streamChannelExists ()
 {
-	constexpr uint32_t firstMicAuxChannel = 3;
-	constexpr uint32_t lastMicAuxChannel = 6;
 	bool found = false;
 
-	for (uint32_t channel = firstMicAuxChannel; channel <= lastMicAuxChannel; ++channel)
+	for (uint32_t channel = firstMicAuxChannelIndex; channel <= lastMicAuxChannelIndex; ++channel)
 	{
 		obs_source_t* existingSource = obs_get_output_source (channel);
 		if (existingSource)
@@ -80,7 +81,10 @@ static int32_t streamChannelExists ()
 
 			if (strcmp (deviceId, kSteinbergMixKeyStreamDeviceId) == 0 &&
 			    strcmp (name, "MixKey") == 0)
+			{
 				found = true;
+				mixKeyChannelIndex = channel;
+			}
 
 			obs_data_release (settings);
 		}
@@ -137,7 +141,7 @@ static void addSource ()
 		return;
 
 	addStreamDeviceToSourceProperties (source);
-	addToFirstFreeMicAuxChannel (source);
+	mixKeyChannelIndex = addToFirstFreeMicAuxChannel (source);
 }
 
 //------------------------------------------------------------------------
