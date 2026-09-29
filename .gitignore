@@ -41,3 +41,9 @@
 *.dwo
 
 **/build_x86_64
+
+# CMake
+.deps
+CMakeFiles
+CMakeCache.txt
+build_macos
