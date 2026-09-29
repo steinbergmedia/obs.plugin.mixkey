@@ -13,8 +13,71 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QWidget>
+#include <obs-frontend-api.h>
+#include <obs-module.h>
 
 namespace MixKey {
+
+const char* kSteinbergMixKeyStreamDeviceId =
+    "{0.0.1.00000000}.{0d18d47c-45ed-4ad2-ab39-7432ca979209}";
+const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
+// const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
+
+static bool enumSourcesCallback (void* data, obs_source_t* source)
+{
+	const char* name = obs_source_get_name (source);
+	const char* id = obs_source_get_id (source);
+	blog (LOG_INFO, "Source: name='%s'  id='%s'", name, id);
+	return true;
+}
+
+static void inspectSourceProperties (obs_source_t* source)
+{
+	obs_properties_t* props = obs_source_properties (source);
+	if (!props)
+		return;
+	obs_property_t* prop = obs_properties_get (props, "device_id");
+
+	if (!prop)
+		return;
+
+	if (obs_property_get_type (prop) == OBS_PROPERTY_LIST)
+	{
+		size_t count = obs_property_list_item_count (prop);
+
+		for (size_t i = 0; i < count; i++)
+		{
+
+			const char* name = obs_property_list_item_name (prop, i);
+			const char* value = obs_property_list_item_string (prop, i);
+			blog (LOG_INFO, "Source: name='%s'  value='%s'", name, value);
+
+			if (QString (value) != kSteinbergMixKeyStreamDeviceId)
+				continue;
+			obs_data_t* settings = obs_source_get_settings (source);
+			obs_data_set_string (settings, "device_id", value);
+			obs_source_update (source, settings);
+			obs_data_release (settings);
+			break;
+		}
+	}
+
+	obs_properties_destroy (props);
+}
+static void addSource ()
+{
+	obs_source_t* source = obs_source_create (kAudioInputCaptureSourceId, "Mixkey", 0, nullptr);
+	if (!source)
+		return;
+
+	inspectSourceProperties (source);
+	obs_source_t* scene_source = obs_frontend_get_current_scene ();
+	if (!scene_source)
+		return;
+	obs_scene_t* scene = obs_scene_from_source (scene_source);
+	obs_scene_add (scene, source);
+	obs_source_release (source);
+}
 
 //------------------------------------------------------------------------
 void* createDocWidget ()
@@ -31,7 +94,11 @@ void* createDocWidget ()
 	box->setAlignment (Qt::AlignCenter);
 
 	QPushButton* addButton = new QPushButton ();
-	QPushButton::connect (addButton, &QPushButton::pressed, [] () {});
+	QPushButton::connect (addButton, &QPushButton::pressed, [] () {
+		//
+		obs_enum_sources (enumSourcesCallback, nullptr);
+		addSource ();
+	});
 
 	addButton->setText ("Add MixKey Source");
 	QIcon icon;
@@ -41,6 +108,7 @@ void* createDocWidget ()
 
 	QPushButton* startButton = new QPushButton ();
 	QPushButton::connect (startButton, &QPushButton::pressed, [] () {});
+
 	startButton->setText ("Start MixKey");
 	QIcon startIcon;
 	startIcon.addFile (QString ("C:\\Users\\ABruehl\\Downloads\\start.svg"), QSize (10, 10));
@@ -65,12 +133,6 @@ void* createDocWidget ()
 	layout->addWidget (addButton);
 	layout->addWidget (startButton);
 	layout->addWidget (repairButton);
-
-	//layout->setAlignment (Qt::AlignCenter | Qt::AlignTop);
-
-	// QMainWindow *main = (QMainWindow *)obs_frontend_get_main_window();
-
-	// main->addDockWidget(Qt::LeftDockWidgetArea,dock);
 
 	return (void*)dock;
 }
