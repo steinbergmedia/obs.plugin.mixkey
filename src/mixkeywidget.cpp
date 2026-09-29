@@ -18,12 +18,20 @@
 
 namespace MixKey {
 
+//------------------------------------------------------------------------
 const char* kSteinbergMixKeyStreamDeviceId =
     "{0.0.1.00000000}.{0d18d47c-45ed-4ad2-ab39-7432ca979209}";
-const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
-// const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
 
-static bool enumSourcesCallback (void* data, obs_source_t* source)
+#if defined (_WIN32)
+const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
+#elif __APPLE__
+const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
+#elif (defined (__gnu_linux__) && __gnu_linux__) || (defined (__linux__) && __linux__)
+#error "Implement Me!"
+#endif
+
+//------------------------------------------------------------------------
+static bool enumSourcesCallback (void* /*data*/, obs_source_t* source)
 {
 	const char* name = obs_source_get_name (source);
 	const char* id = obs_source_get_id (source);
@@ -31,6 +39,7 @@ static bool enumSourcesCallback (void* data, obs_source_t* source)
 	return true;
 }
 
+//------------------------------------------------------------------------
 static void inspectSourceProperties (obs_source_t* source)
 {
 	obs_properties_t* props = obs_source_properties (source);
@@ -47,7 +56,6 @@ static void inspectSourceProperties (obs_source_t* source)
 
 		for (size_t i = 0; i < count; i++)
 		{
-
 			const char* name = obs_property_list_item_name (prop, i);
 			const char* value = obs_property_list_item_string (prop, i);
 			blog (LOG_INFO, "Source: name='%s'  value='%s'", name, value);
@@ -64,6 +72,8 @@ static void inspectSourceProperties (obs_source_t* source)
 
 	obs_properties_destroy (props);
 }
+
+//------------------------------------------------------------------------
 static void addSource ()
 {
 	obs_source_t* source = obs_source_create (kAudioInputCaptureSourceId, "Mixkey", 0, nullptr);
@@ -136,4 +146,6 @@ void* createDocWidget ()
 
 	return (void*)dock;
 }
+
+//------------------------------------------------------------------------
 } // namespace MixKey
