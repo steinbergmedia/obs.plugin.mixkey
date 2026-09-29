@@ -111,8 +111,7 @@ void* createDocWidget ()
 	});
 
 	addButton->setText ("Add MixKey Source");
-	QIcon icon;
-	icon.addFile (QString ("C:\\Users\\ABruehl\\Downloads\\Vector.svg"), QSize (10, 10));
+	QIcon icon (":/mixkey/images/add.svg");
 	addButton->setIcon (icon);
 	addButton->setIconSize (QSize (10, 10));
 
@@ -120,16 +119,14 @@ void* createDocWidget ()
 	QPushButton::connect (startButton, &QPushButton::pressed, [] () {});
 
 	startButton->setText ("Start MixKey");
-	QIcon startIcon;
-	startIcon.addFile (QString ("C:\\Users\\ABruehl\\Downloads\\start.svg"), QSize (10, 10));
+	QIcon startIcon (":/mixkey/images/start.svg");
 	startButton->setIcon (startIcon);
 	startButton->setIconSize (QSize (10, 10));
 
 	QPushButton* repairButton = new QPushButton ();
 	QPushButton::connect (repairButton, &QPushButton::pressed, [] () {});
 	repairButton->setText ("Repair MixKey Source");
-	QIcon repairIcon;
-	repairIcon.addFile (QString ("C:\\Users\\ABruehl\\Downloads\\repair.svg"), QSize (10, 10));
+	QIcon repairIcon (":/mixkey/images/repair.svg");
 	repairButton->setIcon (repairIcon);
 	repairButton->setIconSize (QSize (10, 10));
 
