@@ -95,7 +95,7 @@ static void enumOutputSources ()
 }
 
 //------------------------------------------------------------------------
-static int32_t getFirstFreeAudioDeviceSlot ()
+static int32_t getFirstFreeAuxDeviceSlot ()
 {
 	int32_t index = kNone;
 	for (uint32_t i = kAuxDevice1; i <= kAuxDevice4; ++i)
@@ -115,12 +115,12 @@ static int32_t getFirstFreeAudioDeviceSlot ()
 }
 
 //------------------------------------------------------------------------
-static int32_t addToFirstFreeMicAuxChannel (obs_source_t* source)
+static int32_t addToFirstFreeAuxChannel (obs_source_t* source)
 {
 	if (!source)
 		return kNone;
 
-	const int32_t index = getFirstFreeAudioDeviceSlot ();
+	const int32_t index = getFirstFreeAuxDeviceSlot ();
 	if (index == kNone)
 	{
 		obs_log (LOG_WARNING, "[SMTG] MixKey: No free global Mic/Aux channel available");
@@ -131,7 +131,6 @@ static int32_t addToFirstFreeMicAuxChannel (obs_source_t* source)
 	obs_log (LOG_INFO, "[SMTG] MixKey: Added source '%s' to global Mic/Aux channel %u",
 	         obs_source_get_name (source), index);
 
-	// TODO: refcounting the `source`??
 	return index;
 }
 
@@ -212,7 +211,7 @@ static void addSource ()
 		return;
 
 	addStreamDeviceToSourceProperties (source);
-	addToFirstFreeMicAuxChannel (source);
+	addToFirstFreeAuxChannel (source);
 
 	obs_source_release (source);
 }
