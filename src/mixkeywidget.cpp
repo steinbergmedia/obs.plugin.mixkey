@@ -23,12 +23,13 @@ namespace MixKey {
 const char* kSteinbergMixKeyStreamDeviceId =
     "{0.0.1.00000000}.{0d18d47c-45ed-4ad2-ab39-7432ca979209}";
 
+// https://github.com/obsproject/obs-studio/blob/master/libobs/obs-audio.c#L52
 #if defined (_WIN32)
 const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
 #elif __APPLE__
 const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
 #elif (defined (__gnu_linux__) && __gnu_linux__) || (defined (__linux__) && __linux__)
-#error "Implement Me!"
+const char* kAudioInputCaptureSourceId = "pulse_output_capture";
 #endif
 
 static int32_t mixKeyChannelIndex = -1;
