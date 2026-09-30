@@ -13,87 +13,154 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QWidget>
+#include <obs-defs.h>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 #include <plugin-support.h>
+#include <string>
 
 namespace MixKey {
 
+/**
+    See also OBS source code
+    UpdateAudioDevice(false, ui->desktopAudioDevice1, "Basic.DesktopDevice1", 1);
+    UpdateAudioDevice(false, ui->desktopAudioDevice2, "Basic.DesktopDevice2", 2);
+    UpdateAudioDevice(true, ui->auxAudioDevice1, "Basic.AuxDevice1", 3);
+    UpdateAudioDevice(true, ui->auxAudioDevice2, "Basic.AuxDevice2", 4);
+    UpdateAudioDevice(true, ui->auxAudioDevice3, "Basic.AuxDevice3", 5);
+    UpdateAudioDevice(true, ui->auxAudioDevice4, "Basic.AuxDevice4", 6);
+ */
+enum BasicAudioDevice
+{
+	kNone = -1,
+	kDesktopDevice1 = 1,
+	kDesktopDevice2 = 2,
+	kAuxDevice1 = 3,
+	kAuxDevice2 = 4,
+	kAuxDevice3 = 5,
+	kAuxDevice4 = 6,
+
+};
+
 //------------------------------------------------------------------------
-const char* kSteinbergMixKeyStreamDeviceId =
-    "{0.0.1.00000000}.{0d18d47c-45ed-4ad2-ab39-7432ca979209}";
+const char* kSourceName = "MixKey";
 
 // https://github.com/obsproject/obs-studio/blob/master/libobs/obs-audio.c#L52
-#if defined (_WIN32)
+#if defined(_WIN32)
 const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
+const char* kSteinbergMixKeyStreamDeviceId =
+    "{0.0.1.00000000}.{0d18d47c-45ed-4ad2-ab39-7432ca979209}";
 #elif __APPLE__
 const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
-#elif (defined (__gnu_linux__) && __gnu_linux__) || (defined (__linux__) && __linux__)
+const char* kSteinbergMixKeyStreamDeviceId = "SteinbergMixKey:Stream";
+#elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
 const char* kAudioInputCaptureSourceId = "pulse_output_capture";
 #endif
 
-static int32_t mixKeyChannelIndex = -1;
+//------------------------------------------------------------------------
+static bool enumSourcesCallback (void* /*data*/, obs_source_t* source)
+{
+	const char* name = obs_source_get_name (source);
+	const char* id = obs_source_get_id (source);
 
-constexpr uint32_t firstMicAuxChannelIndex =
-    3; // Obs' global Audio channels for Mic/Aux start at channelindex 3 and end at 6
-constexpr uint32_t lastMicAuxChannelIndex = 6;
+	blog (LOG_INFO, "[SMTG] Source: name='%s'  id='%s'", name, id);
+	return true;
+}
+
+//------------------------------------------------------------------------
+static void enumSources ()
+{
+	obs_enum_sources (enumSourcesCallback, nullptr);
+}
+
+//------------------------------------------------------------------------
+static void enumOutputSources ()
+{
+	for (int32_t channel = 0; channel < MAX_CHANNELS; ++channel)
+	{
+		const obs_source_t* source = obs_get_output_source (channel);
+		if (!source)
+			continue;
+
+		const char* name = obs_source_get_name (source);
+		const char* id = obs_source_get_id (source);
+		const char* uuid = obs_source_get_uuid (source);
+		obs_source_type type = obs_source_get_type (source);
+		if (type != OBS_SOURCE_TYPE_INPUT)
+			continue;
+
+		obs_log (LOG_INFO, "[SMTG] Source: name='%s'  id='%s' uuid='%s' type='%i'", name, id, uuid,
+		         type);
+	}
+}
+
+//------------------------------------------------------------------------
+static int32_t getFirstFreeAudioDeviceSlot ()
+{
+	int32_t index = kNone;
+	for (uint32_t i = kAuxDevice1; i <= kAuxDevice4; ++i)
+	{
+		obs_source_t* existingSource = obs_get_output_source (i);
+		if (existingSource)
+		{
+			obs_source_release (existingSource);
+			continue;
+		}
+
+		index = i;
+		break;
+	}
+
+	return index;
+}
 
 //------------------------------------------------------------------------
 static int32_t addToFirstFreeMicAuxChannel (obs_source_t* source)
 {
 	if (!source)
-		return -1;
+		return kNone;
 
-	for (uint32_t channel = firstMicAuxChannelIndex; channel <= lastMicAuxChannelIndex; ++channel)
+	const int32_t index = getFirstFreeAudioDeviceSlot ();
+	if (index == kNone)
 	{
-		obs_source_t* existingSource = obs_get_output_source (channel);
-
-		if (!existingSource)
-		{
-			obs_set_output_source (channel, source);
-
-			obs_log (LOG_INFO, "MixKey: Added source '%s' to global Mic/Aux channel %u",
-			         obs_source_get_name (source), channel);
-
-			return channel;
-		}
-		obs_source_release (existingSource);
+		obs_log (LOG_WARNING, "[SMTG] MixKey: No free global Mic/Aux channel available");
+		return kNone;
 	}
 
-	obs_log (LOG_WARNING, "MixKey: No free global Mic/Aux channel available");
+	obs_set_output_source (index, source);
+	obs_log (LOG_INFO, "[SMTG] MixKey: Added source '%s' to global Mic/Aux channel %u",
+	         obs_source_get_name (source), index);
 
-	return -1;
+	// TODO: refcounting the `source`??
+	return index;
 }
 
 //------------------------------------------------------------------------
-static int32_t streamChannelExists ()
+static bool streamChannelExists ()
 {
 	bool found = false;
 
-	for (uint32_t channel = firstMicAuxChannelIndex; channel <= lastMicAuxChannelIndex; ++channel)
+	for (int32_t i = kAuxDevice1; i <= kAuxDevice4; ++i)
 	{
-		obs_source_t* existingSource = obs_get_output_source (channel);
-		if (existingSource)
-		{
-			const char* name = obs_source_get_name (existingSource);
-			obs_data_t* settings = obs_source_get_settings (existingSource);
+		obs_source_t* existingSource = obs_get_output_source (i);
+		if (!existingSource)
+			continue;
 
-			const char* deviceId = obs_data_get_string (settings, "device_id");
+		const std::string name = obs_source_get_name (existingSource);
+		obs_data_t* settings = obs_source_get_settings (existingSource);
+		if (!settings)
+			continue;
 
-			if (strcmp (deviceId, kSteinbergMixKeyStreamDeviceId) == 0 &&
-			    strcmp (name, "MixKey") == 0)
-			{
-				found = true;
-				mixKeyChannelIndex = channel;
-			}
+		const std::string deviceId = obs_data_get_string (settings, "device_id");
+		found = (deviceId == kSteinbergMixKeyStreamDeviceId) && (name == kSourceName);
 
-			obs_data_release (settings);
-		}
+		obs_data_release (settings);
 		obs_source_release (existingSource);
 
 		if (found)
 			break;
 	}
+
 	return found;
 }
 
@@ -103,24 +170,27 @@ static void addStreamDeviceToSourceProperties (obs_source_t* source)
 	obs_properties_t* props = obs_source_properties (source);
 	if (!props)
 		return;
-	obs_property_t* prop = obs_properties_get (props, "device_id");
 
+	obs_property_t* prop = obs_properties_get (props, "device_id");
 	if (!prop)
 		return;
 
 	if (obs_property_get_type (prop) == OBS_PROPERTY_LIST)
 	{
-		size_t count = obs_property_list_item_count (prop);
-
+		const size_t count = obs_property_list_item_count (prop);
 		for (size_t i = 0; i < count; i++)
 		{
 			const char* name = obs_property_list_item_name (prop, i);
 			const char* value = obs_property_list_item_string (prop, i);
-			blog (LOG_INFO, "Source: name='%s'  value='%s'", name, value);
+			obs_log (LOG_INFO, "Source: name='%s'  value='%s'", name, value);
 
 			if (QString (value) != kSteinbergMixKeyStreamDeviceId)
 				continue;
+
 			obs_data_t* settings = obs_source_get_settings (source);
+			if (!settings)
+				return;
+
 			obs_data_set_string (settings, "device_id", value);
 			obs_source_update (source, settings);
 			obs_data_release (settings);
@@ -137,12 +207,14 @@ static void addSource ()
 	if (streamChannelExists ())
 		return;
 
-	obs_source_t* source = obs_source_create (kAudioInputCaptureSourceId, "MixKey", 0, nullptr);
+	obs_source_t* source = obs_source_create (kAudioInputCaptureSourceId, kSourceName, 0, nullptr);
 	if (!source)
 		return;
 
 	addStreamDeviceToSourceProperties (source);
-	mixKeyChannelIndex = addToFirstFreeMicAuxChannel (source);
+	addToFirstFreeMicAuxChannel (source);
+
+	obs_source_release (source);
 }
 
 //------------------------------------------------------------------------
