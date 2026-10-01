@@ -100,7 +100,7 @@ static void enumOutputSources ()
 static int32_t getFirstFreeAuxDeviceSlot ()
 {
 	int32_t index = kNone;
-	for (uint32_t i = kAuxDevice1; i <= kAuxDevice4; ++i)
+	for (int32_t i = kAuxDevice1; i <= kAuxDevice4; ++i)
 	{
 		obs_source_t* existingSource = obs_get_output_source (i);
 		if (existingSource)
