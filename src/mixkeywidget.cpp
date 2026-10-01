@@ -183,7 +183,7 @@ static void addStreamDeviceToSourceProperties (obs_source_t* source)
 			const char* value = obs_property_list_item_string (prop, i);
 			obs_log (LOG_INFO, "Source: name='%s'  value='%s'", name, value);
 
-			if (QString (value) != kSteinbergMixKeyStreamDeviceId)
+			if (std::string (value) != kSteinbergMixKeyStreamDeviceId)
 				continue;
 
 			obs_data_t* settings = obs_source_get_settings (source);
