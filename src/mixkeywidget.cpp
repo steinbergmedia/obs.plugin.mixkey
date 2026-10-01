@@ -183,7 +183,7 @@ static void addStreamDeviceToSourceProperties (obs_source_t* source)
 		{
 			const char* name = obs_property_list_item_name (prop, i);
 			const char* value = obs_property_list_item_string (prop, i);
-			obs_log (LOG_INFO, "Source: name='%s'  value='%s'", name, value);
+			obs_log (LOG_INFO, "[SMTG] Source: name='%s'  value='%s'", name, value);
 
 			if (std::string (value) != kSteinbergMixKeyStreamDeviceId)
 				continue;
