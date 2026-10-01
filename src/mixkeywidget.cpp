@@ -17,7 +17,7 @@
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 #include <plugin-support.h>
-#include <string>
+#include <string_view>
 
 namespace MixKey {
 
@@ -80,7 +80,7 @@ static void enumOutputSources ()
 	for (int32_t channel = 0; channel < MAX_CHANNELS; ++channel)
 	{
 		obs_source_t* source = obs_get_output_source (channel);
-		if (!source)
+		if (source == nullptr)
 			continue;
 
 		const char* name = obs_source_get_name (source);
@@ -120,7 +120,7 @@ static int32_t getFirstFreeAuxDeviceSlot ()
 //------------------------------------------------------------------------
 static int32_t addToFirstFreeAuxChannel (obs_source_t* source)
 {
-	if (!source)
+	if (source == nullptr)
 		return kNone;
 
 	const int32_t index = getFirstFreeAuxDeviceSlot ();
@@ -145,15 +145,15 @@ static bool streamChannelExists ()
 	for (int32_t i = kAuxDevice1; i <= kAuxDevice4; ++i)
 	{
 		obs_source_t* existingSource = obs_get_output_source (i);
-		if (!existingSource)
+		if (existingSource == nullptr)
 			continue;
 
-		const std::string name = obs_source_get_name (existingSource);
+		const std::string_view name = obs_source_get_name (existingSource);
 		obs_data_t* settings = obs_source_get_settings (existingSource);
-		if (!settings)
+		if (settings == nullptr)
 			continue;
 
-		const std::string deviceId = obs_data_get_string (settings, kDeviceIdString);
+		const std::string_view deviceId = obs_data_get_string (settings, kDeviceIdString);
 		found = (deviceId == kSteinbergMixKeyStreamDeviceId) && (name == kSourceName);
 
 		obs_data_release (settings);
@@ -170,11 +170,11 @@ static bool streamChannelExists ()
 static void addStreamDeviceToSourceProperties (obs_source_t* source)
 {
 	obs_properties_t* props = obs_source_properties (source);
-	if (!props)
+	if (props == nullptr)
 		return;
 
 	obs_property_t* prop = obs_properties_get (props, kDeviceIdString);
-	if (!prop)
+	if (prop == nullptr)
 		return;
 
 	if (obs_property_get_type (prop) == OBS_PROPERTY_LIST)
@@ -186,7 +186,7 @@ static void addStreamDeviceToSourceProperties (obs_source_t* source)
 			const char* value = obs_property_list_item_string (prop, i);
 			obs_log (LOG_INFO, "[SMTG] Source: name='%s'  value='%s'", name, value);
 
-			if (std::string (value) != kSteinbergMixKeyStreamDeviceId)
+			if (std::string_view (value) != kSteinbergMixKeyStreamDeviceId)
 				continue;
 
 			obs_data_t* settings = obs_source_get_settings (source);
@@ -210,7 +210,7 @@ static void addSource ()
 		return;
 
 	obs_source_t* source = obs_source_create (kAudioInputCaptureSourceId, kSourceName, 0, nullptr);
-	if (!source)
+	if (source == nullptr)
 		return;
 
 	addStreamDeviceToSourceProperties (source);
