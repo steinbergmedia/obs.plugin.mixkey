@@ -44,6 +44,7 @@ enum BasicAudioDevice
 
 //------------------------------------------------------------------------
 const char* kSourceName = "MixKey";
+const char* kDeviceIdString = "device_id";
 
 // https://github.com/obsproject/obs-studio/blob/master/libobs/obs-audio.c#L52
 #if defined(_WIN32)
@@ -152,7 +153,7 @@ static bool streamChannelExists ()
 		if (!settings)
 			continue;
 
-		const std::string deviceId = obs_data_get_string (settings, "device_id");
+		const std::string deviceId = obs_data_get_string (settings, kDeviceIdString);
 		found = (deviceId == kSteinbergMixKeyStreamDeviceId) && (name == kSourceName);
 
 		obs_data_release (settings);
@@ -172,7 +173,7 @@ static void addStreamDeviceToSourceProperties (obs_source_t* source)
 	if (!props)
 		return;
 
-	obs_property_t* prop = obs_properties_get (props, "device_id");
+	obs_property_t* prop = obs_properties_get (props, kDeviceIdString);
 	if (!prop)
 		return;
 
@@ -192,7 +193,7 @@ static void addStreamDeviceToSourceProperties (obs_source_t* source)
 			if (!settings)
 				return;
 
-			obs_data_set_string (settings, "device_id", value);
+			obs_data_set_string (settings, kDeviceIdString, value);
 			obs_source_update (source, settings);
 			obs_data_release (settings);
 			break;
