@@ -78,7 +78,7 @@ static void enumOutputSources ()
 {
 	for (int32_t channel = 0; channel < MAX_CHANNELS; ++channel)
 	{
-		const obs_source_t* source = obs_get_output_source (channel);
+		obs_source_t* source = obs_get_output_source (channel);
 		if (!source)
 			continue;
 
@@ -91,6 +91,8 @@ static void enumOutputSources ()
 
 		obs_log (LOG_INFO, "[SMTG] Source: name='%s'  id='%s' uuid='%s' type='%i'", name, id, uuid,
 		         type);
+		
+		obs_source_release (source);
 	}
 }
 
