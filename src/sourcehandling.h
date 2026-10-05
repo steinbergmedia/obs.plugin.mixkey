@@ -21,4 +21,6 @@ enum SetupStatus
 bool streamChannelExists ();
 void createStreamChannelSource ();
 SetupStatus getCurrentSetupState ();
-}
+
+//------------------------------------------------------------------------
+} // namespace MixKey
