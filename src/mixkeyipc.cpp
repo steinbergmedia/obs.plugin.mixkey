@@ -15,8 +15,8 @@ namespace MixKey {
 
 //------------------------------------------------------------------------
 #define kMixKeyOBSIpcId "MixKeyOBSIpc"
-constexpr int32_t kReconnectingInterval = 2000;
-constexpr int32_t kMessageLengthMaximum = 10;
+constexpr int32_t kReconnectInterval = 2000;
+constexpr int32_t kMaxMessageLength = 10;
 
 //------------------------------------------------------------------------
 // Client
@@ -52,12 +52,12 @@ Client::Client (QObject* object) : QObject (object)
 			{
 				if (getCurrentSetupState () == kOk)
 				{
-					socket->write ("ok", kMessageLengthMaximum);
+					socket->write ("ok", kMaxMessageLength);
 					socket->flush ();
 				}
 				else
 				{
-					socket->write ("notok", kMessageLengthMaximum);
+					socket->write ("notok", kMaxMessageLength);
 					socket->flush ();
 				}
 			}
@@ -65,7 +65,7 @@ Client::Client (QObject* object) : QObject (object)
 	});
 
 	timer = new QTimer (this);
-	timer->setInterval (kReconnectingInterval);
+	timer->setInterval (kReconnectInterval);
 	timer->setSingleShot (true);
 
 	connect (timer, &QTimer::timeout, this,
