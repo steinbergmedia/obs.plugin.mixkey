@@ -13,10 +13,14 @@
 
 namespace MixKey {
 
+//------------------------------------------------------------------------
 #define kMixKeyOBSIpcId "MixKeyOBSIpc"
 constexpr int32_t kReconnectingInterval = 2000;
 constexpr int32_t kMessageLengthMaximum = 10;
 
+//------------------------------------------------------------------------
+// Client
+//------------------------------------------------------------------------
 Client::Client (QObject* object) : QObject (object)
 {
 	socket = new QLocalSocket (this);
@@ -71,4 +75,6 @@ Client::~Client ()
 	delete socket;
 	delete timer;
 }
-}
+
+//------------------------------------------------------------------------
+} // namespace MixKey
