@@ -27,7 +27,7 @@ Client::Client (QObject* object) : QObject (object)
 
 	connect (socket, &QLocalSocket::connected, this, [this] () {
 		qDebug ("[SMTG] Connected to MixKey.");
-		timer->stop ();
+		//
 	});
 
 	connect (socket, &QLocalSocket::disconnected, this, [this] () {
@@ -36,8 +36,8 @@ Client::Client (QObject* object) : QObject (object)
 	});
 
 	connect (socket, &QLocalSocket::errorOccurred, this, [this] (QLocalSocket::LocalSocketError) {
-		qDebug ("[SMTG] Occuring error from MixKey socket.");
-		timer->stop ();
+		qDebug ("[SMTG] Socket error occurred. Try again to connect to MixKey.");
+		timer->start ();
 	});
 
 	connect (socket, &QLocalSocket::readyRead, this, [this] () {
@@ -66,11 +66,13 @@ Client::Client (QObject* object) : QObject (object)
 
 	timer = new QTimer (this);
 	timer->setInterval (kReconnectingInterval);
+	timer->setSingleShot (true);
 
 	connect (timer, &QTimer::timeout, this,
 	         [this] () { //
 		         this->socket->connectToServer (kMixKeyOBSIpcId);
 	         });
+
 	timer->start ();
 }
 
