@@ -26,14 +26,19 @@ Client::Client (QObject* object) : QObject (object)
 	socket = new QLocalSocket (this);
 
 	connect (socket, &QLocalSocket::connected, this, [this] () {
-		qDebug ("Connected to MixKey.");
+		qDebug ("[SMTG] Connected to MixKey.");
 		timer->stop ();
 	});
 
-	connect (socket, &QLocalSocket::disconnected, this, [this] () { timer->start (); });
+	connect (socket, &QLocalSocket::disconnected, this, [this] () {
+		qDebug ("[SMTG] Disconnected from MixKey.");
+		timer->start ();
+	});
 
-	connect (socket, &QLocalSocket::errorOccurred, this,
-	         [this] (QLocalSocket::LocalSocketError) { timer->stop (); });
+	connect (socket, &QLocalSocket::errorOccurred, this, [this] (QLocalSocket::LocalSocketError) {
+		qDebug ("[SMTG] Occuring error from MixKey socket.");
+		timer->stop ();
+	});
 
 	connect (socket, &QLocalSocket::readyRead, this, [this] () {
 		QString msg = QString::fromUtf8 (socket->readAll ());
