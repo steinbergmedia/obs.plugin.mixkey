@@ -59,7 +59,7 @@ void Client::initSocket ()
 	});
 
 	connect (socket, &QLocalSocket::errorOccurred, this, [this] (QLocalSocket::LocalSocketError) {
-		qDebug ("[SMTG] Socket error occurred. Try again to connect to MixKey.");
+		// qDebug ("[SMTG] Socket error occurred. Try again to connect to MixKey.");
 		timer->start ();
 	});
 
