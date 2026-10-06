@@ -20,10 +20,10 @@ namespace MixKey {
 //------------------------------------------------------------------------
 struct Context
 {
-	Client* socket;
+	Client* client {nullptr};
 };
 
-static Context clientContext;
+static Context context;
 
 //------------------------------------------------------------------------
 static void addSource ()
@@ -61,6 +61,8 @@ void* createDocWidget ()
 	layout->setAlignment (Qt::AlignTop);
 	dock->setLayout (layout);
 
+	context.client = new Client (dock);
+
 	QLabel* statusIndicator = new QLabel ();
 	statusIndicator->setText ("SOURCE REQUIRED");
 	statusIndicator->setAlignment (Qt::AlignCenter);
@@ -88,8 +90,6 @@ void* createDocWidget ()
 	layout->addWidget (addButton);
 	layout->addWidget (startButton);
 	layout->addWidget (repairButton);
-
-	clientContext.socket = new Client (dock);
 
 	return (void*)dock;
 }
