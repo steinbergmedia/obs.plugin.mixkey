@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "obs.h"
+
 namespace MixKey {
 
 //------------------------------------------------------------------------
@@ -21,6 +23,7 @@ enum SetupStatus
 bool streamChannelExists ();
 void createStreamChannelSource ();
 SetupStatus getCurrentSetupState ();
+bool isMixKeySource (obs_source_t* source);
 
 //------------------------------------------------------------------------
 } // namespace MixKey

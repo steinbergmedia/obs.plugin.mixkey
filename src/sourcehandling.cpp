@@ -216,4 +216,19 @@ void createStreamChannelSource ()
 
 	obs_source_release (source);
 }
+
+//------------------------------------------------------------------------
+bool isMixKeySource (obs_source_t* source)
+{
+	const std::string_view name = obs_source_get_name (source);
+	obs_data_t* settings = obs_source_get_settings (source);
+	if (settings == nullptr)
+		return false;
+
+	const std::string_view deviceId = obs_data_get_string (settings, kDeviceIdString);
+	const bool res = (deviceId == kSteinbergMixKeyStreamDeviceId) && (name == kSourceName);
+	return res;
+}
+
+//------------------------------------------------------------------------
 }
