@@ -25,6 +25,9 @@ public:
 
 //------------------------------------------------------------------------
 protected:
+	void initSocket ();
+	void initConnectionTimer ();
+
 	QLocalSocket* socket;
 	QTimer* timer;
 };

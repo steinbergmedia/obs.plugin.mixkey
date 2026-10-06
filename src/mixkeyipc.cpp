@@ -23,11 +23,27 @@ constexpr int32_t kMaxMessageLength = 10;
 //------------------------------------------------------------------------
 Client::Client (QObject* object) : QObject (object)
 {
+	initSocket ();
+	initConnectionTimer ();
+}
+
+//------------------------------------------------------------------------
+Client::~Client ()
+{
+	delete socket;
+	delete timer;
+}
+
+//------------------------------------------------------------------------
+void Client::initSocket ()
+{
 	socket = new QLocalSocket (this);
 
 	connect (socket, &QLocalSocket::connected, this, [this] () {
 		qDebug ("[SMTG] Connected to MixKey.");
-		//
+
+		socket->write (QString ("Hey, OBS here!").toUtf8 ());
+		socket->flush ();
 	});
 
 	connect (socket, &QLocalSocket::disconnected, this, [this] () {
@@ -63,24 +79,21 @@ Client::Client (QObject* object) : QObject (object)
 			}
 		}
 	});
+}
 
+//------------------------------------------------------------------------
+void Client::initConnectionTimer ()
+{
 	timer = new QTimer (this);
 	timer->setInterval (kReconnectInterval);
 	timer->setSingleShot (true);
 
 	connect (timer, &QTimer::timeout, this,
 	         [this] () { //
-		         this->socket->connectToServer (kMixKeyOBSIpcId);
+		         socket->connectToServer (kMixKeyOBSIpcId);
 	         });
 
 	timer->start ();
-}
-
-// -----------------------------------------------------------------------------
-Client::~Client ()
-{
-	delete socket;
-	delete timer;
 }
 
 //------------------------------------------------------------------------
