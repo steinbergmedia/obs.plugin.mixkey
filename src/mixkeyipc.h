@@ -10,6 +10,7 @@
 
 #include <QLocalSocket>
 #include <QTimer>
+#include <functional>
 
 namespace MixKey {
 
@@ -20,9 +21,19 @@ class Client : public QObject
 {
 public:
 //------------------------------------------------------------------------
+	enum class State
+	{
+		kDisconnected,
+		kConnected
+	};
+	
+	using FnOnConnectionState = std::function<void (State)>;
+
 	Client (QObject* object);
 	~Client () override;
 
+	FnOnConnectionState onConnectionStateChanged;
+	
 //------------------------------------------------------------------------
 protected:
 	void initSocket ();

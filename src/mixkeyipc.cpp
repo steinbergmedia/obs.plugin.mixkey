@@ -42,12 +42,19 @@ void Client::initSocket ()
 	connect (socket, &QLocalSocket::connected, this, [this] () {
 		qDebug ("[SMTG] Connected to MixKey.");
 
+		if (onConnectionStateChanged)
+			onConnectionStateChanged (State::kConnected);
+
 		socket->write (QString ("Hey, OBS here!").toUtf8 ());
 		socket->flush ();
 	});
 
 	connect (socket, &QLocalSocket::disconnected, this, [this] () {
 		qDebug ("[SMTG] Disconnected from MixKey.");
+
+		if (onConnectionStateChanged)
+			onConnectionStateChanged (State::kDisconnected);
+
 		timer->start ();
 	});
 

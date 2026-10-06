@@ -15,6 +15,8 @@
 #include <QPushButton>
 #include <QWidget>
 
+#include "obs.h"
+
 namespace MixKey {
 
 //------------------------------------------------------------------------
@@ -38,9 +40,9 @@ static void addSource ()
 //------------------------------------------------------------------------
 static void addIcon (const QString& iconPath, QPushButton* button)
 {
-	if (iconPath.isEmpty() || button == nullptr)
+	if (iconPath.isEmpty () || button == nullptr)
 		return;
-	
+
 	static const QSize kIconSize = QSize (10, 10);
 
 	QIcon icon;
@@ -50,7 +52,8 @@ static void addIcon (const QString& iconPath, QPushButton* button)
 }
 
 //------------------------------------------------------------------------
-static QPushButton* createButton (const QString& text, const QString& iconPath, const QString& objectName)
+static QPushButton* createButton (const QString& text, const QString& iconPath,
+                                  const QString& objectName)
 {
 	QPushButton* button = new QPushButton ();
 	button->setText (text);
@@ -73,16 +76,16 @@ void* createDocWidget ()
 
 	context.client = new Client (dock);
 
-	QLabel* statusIndicator = new QLabel ();
-	statusIndicator->setText ("SOURCE REQUIRED");
-	statusIndicator->setAlignment (Qt::AlignCenter);
+	QLabel* status = new QLabel ();
+	status->setText ("Offline");
+	status->setAlignment (Qt::AlignCenter);
+	status->setStyleSheet ("color: red;");
+	status->setFixedHeight (38);
 
 	QPushButton* addButton = createButton (
 	    "Add MixKey Source", "C:\\Users\\ABruehl\\Downloads\\Vector.svg", "addbutton");
-	QPushButton::connect (addButton, &QPushButton::pressed, [] () {
-		//
-		addSource ();
-	});
+	QPushButton::connect (addButton, &QPushButton::pressed, [] () { addSource (); });
+	addButton->setDisabled (streamChannelExists ());
 
 	QPushButton* startButton =
 	    createButton ("Start MixKey", "C:\\Users\\ABruehl\\Downloads\\start.svg", "startbutton");
@@ -90,16 +93,28 @@ void* createDocWidget ()
 	QPushButton* repairButton = createButton (
 	    "Repair MixKey Source", "C:\\Users\\ABruehl\\Downloads\\repair.svg", "repairbutton");
 
-	QLabel* label =
-	    new QLabel ("Click \"Add MixKey Source\" to add the MixKey your in Sources list.");
-	label->setAlignment (Qt::AlignCenter);
-	label->setWordWrap (true);
-
-	layout->addWidget (statusIndicator);
-	layout->addWidget (label);
+	layout->addWidget (status);
 	layout->addWidget (addButton);
 	layout->addWidget (startButton);
 	layout->addWidget (repairButton);
+	
+	context.client->onConnectionStateChanged = [status] (const Client::State state) {
+		switch (state)
+		{
+			case Client::State::kConnected:
+			{
+				status->setStyleSheet ("color: green;");
+				status->setText ("Online");
+				break;
+			}
+			case Client::State::kDisconnected:
+			{
+				status->setStyleSheet ("color: red;");
+				status->setText ("Offline");
+				break;
+			}
+		}
+	};
 
 	return (void*)dock;
 }
