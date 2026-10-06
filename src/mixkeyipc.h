@@ -28,8 +28,8 @@ protected:
 	void initSocket ();
 	void initConnectionTimer ();
 
-	QLocalSocket* socket;
-	QTimer* timer;
+	QLocalSocket* socket {nullptr};
+	QTimer* timer {nullptr};
 };
 
 //------------------------------------------------------------------------
