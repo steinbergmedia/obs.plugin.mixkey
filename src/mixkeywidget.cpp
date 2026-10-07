@@ -51,6 +51,8 @@ struct Context
 	obs_source_t* source {nullptr};
 
 	QPointer<QPushButton> addBut;
+	QPointer<QPushButton> startBut;
+	QPointer<QPushButton> repairBut;
 };
 
 static Context context;
@@ -215,34 +217,11 @@ static void disconnectSourceCallbacks (Context& context)
 void* createDocWidget ()
 {
 	QWidget* dock = new QWidget ();
-	QVBoxLayout* layout = new QVBoxLayout (dock);
-	layout->setContentsMargins (6, 6, 6, 6);
-	layout->setSpacing (0);
-	layout->setAlignment (Qt::AlignTop);
-	dock->setLayout (layout);
+	QVBoxLayout* layout = createBoxLayout (dock);
 
 	context.client = new Client (dock);
 
-	QLabel* status = new QLabel ();
-	status->setText ("Offline");
-	status->setAlignment (Qt::AlignCenter);
-	status->setStyleSheet ("color: red;");
-	status->setFixedHeight (38);
-
-	context.addBut = createButton ("Add MixKey Source", ":/mixkey/images/add.svg", "addbutton");
-	QPushButton::connect (context.addBut, &QPushButton::pressed, [] () { addSource (); });
-
-	QPushButton* startButton =
-	    createButton ("Start MixKey", ":/mixkey/images/start.svg", "startbutton");
-
-	QPushButton* repairButton =
-	    createButton ("Repair MixKey Source", ":/mixkey/images/repair.svg", "repairbutton");
-
-	layout->addWidget (status);
-	layout->addWidget (context.addBut);
-	layout->addWidget (startButton);
-	layout->addWidget (repairButton);
-
+	QLabel* status = createStatus ();
 	context.client->onConnectionStateChanged = [status] (const Client::State state) {
 		switch (state)
 		{
@@ -260,6 +239,22 @@ void* createDocWidget ()
 			}
 		}
 	};
+
+	context.addBut = createButton ("Add MixKey Source", ":/mixkey/images/add.svg", "addbutton");
+	QPushButton::connect (context.addBut, &QPushButton::pressed, [] () { addSource (); });
+
+	context.startBut = createButton ("Start MixKey", ":/mixkey/images/start.svg", "startbutton");
+	QPushButton::connect (context.startBut, &QPushButton::pressed, [] () { startMixKeyApp (); });
+
+	context.repairBut =
+	    createButton ("Repair MixKey Source", ":/mixkey/images/repair.svg", "repairbutton");
+	QPushButton::connect (context.repairBut, &QPushButton::pressed,
+	                      [] () { repairMixKeyConection (); });
+
+	layout->addWidget (status);
+	layout->addWidget (context.addBut);
+	layout->addWidget (context.startBut);
+	layout->addWidget (context.repairBut);
 
 	connectSourceCallbacks (context);
 
