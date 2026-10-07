@@ -13,12 +13,35 @@
 #include <QBoxLayout>
 #include <QLabel>
 #include <QPointer>
+#include <QProcess>
 #include <QPushButton>
 #include <QWidget>
 
 #include "obs.h"
 
 namespace MixKey {
+
+//------------------------------------------------------------------------
+static void startMixKeyApp ()
+{
+#if defined(_WIN32)
+	const QSettings settings (
+	    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\MixKey.exe",
+	    QSettings::NativeFormat);
+	const QString location = settings.value ("Path").toString ();
+	QProcess::startDetached (location);
+#elif __APPLE__
+	QProcess::startDetached ("open", {"-a", "MixKey"});
+#elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
+	QProcess::startDetached ("open", {"MixKey"});
+#endif
+}
+
+//------------------------------------------------------------------------
+static void repairMixKeyConection ()
+{
+	// Implement Me!
+}
 
 //------------------------------------------------------------------------
 struct Context
@@ -66,6 +89,32 @@ static QPushButton* createButton (const QString& text, const QString& iconPath,
 	addIcon (iconPath, button);
 
 	return button;
+}
+
+//------------------------------------------------------------------------
+static QLabel* createStatus ()
+{
+	QLabel* status = new QLabel ();
+	status->setText ("Offline");
+	status->setAlignment (Qt::AlignCenter);
+	status->setStyleSheet ("color: red;");
+	status->setFixedHeight (38);
+
+	return status;
+}
+
+//------------------------------------------------------------------------
+static QVBoxLayout* createBoxLayout (QWidget* parent)
+{
+	auto layout = new QVBoxLayout (parent);
+	layout->setContentsMargins (6, 6, 6, 6);
+	layout->setSpacing (0);
+	layout->setAlignment (Qt::AlignTop);
+
+	if (parent)
+		parent->setLayout (layout);
+
+	return layout;
 }
 
 //------------------------------------------------------------------------
