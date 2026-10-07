@@ -140,7 +140,6 @@ SetupStatus getCurrentSetupState ()
 void createStreamChannelSource ()
 {
 	obs_data_t* settings = createSourceSettings ();
-	obs_data_set_string (settings, kDeviceIdString, kSteinbergMixKeyStreamDeviceId);
 	obs_source_t* source =
 	    obs_source_create (kAudioInputCaptureSourceId, kSourceName, settings, nullptr);
 	obs_data_release (settings);

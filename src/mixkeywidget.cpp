@@ -12,6 +12,7 @@
 
 #include <QBoxLayout>
 #include <QLabel>
+#include <QPointer>
 #include <QPushButton>
 #include <QWidget>
 
@@ -24,6 +25,9 @@ struct Context
 {
 	Client* client {nullptr};
 	signal_handler_t* handler {nullptr};
+	obs_source_t* source {nullptr};
+
+	QPointer<QPushButton> addBut;
 };
 
 static Context context;
@@ -65,13 +69,20 @@ static QPushButton* createButton (const QString& text, const QString& iconPath,
 }
 
 //------------------------------------------------------------------------
-static void onSourceCreate (void* /*param*/, calldata_t* cd)
+static void onSourceCreate (void* param, calldata_t* cd)
 {
 	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
 	if (!isStreamChannelSource (source))
 		return;
 
 	blog (LOG_INFO, "[MixKey] Create source '%s'", obs_source_get_name (source));
+
+	auto* context = static_cast<Context*> (param);
+	if (!context || !context->addBut)
+		return;
+
+	context->source = source;
+	context->addBut->setDisabled (true);
 }
 
 //------------------------------------------------------------------------
@@ -85,13 +96,23 @@ static void onSourceUpdate (void* /*param*/, calldata_t* cd)
 }
 
 //------------------------------------------------------------------------
-static void onSourceDestroy (void* /*param*/, calldata_t* cd)
+static void onSourceDestroy (void* param, calldata_t* cd)
 {
 	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
 	if (!isStreamChannelSource (source))
 		return;
 
 	blog (LOG_INFO, "[MixKey] Destroy source '%s'", obs_source_get_name (source));
+
+	auto* context = static_cast<Context*> (param);
+	if (!context || !context->addBut)
+		return;
+
+	if (context->source != source)
+		return;
+
+	context->source = nullptr;
+	context->addBut->setEnabled (true);
 }
 
 //------------------------------------------------------------------------
@@ -159,9 +180,8 @@ void* createDocWidget ()
 	status->setStyleSheet ("color: red;");
 	status->setFixedHeight (38);
 
-	QPushButton* addButton =
-	    createButton ("Add MixKey Source", ":/mixkey/images/add.svg", "addbutton");
-	QPushButton::connect (addButton, &QPushButton::pressed, [] () { addSource (); });
+	context.addBut = createButton ("Add MixKey Source", ":/mixkey/images/add.svg", "addbutton");
+	QPushButton::connect (context.addBut, &QPushButton::pressed, [] () { addSource (); });
 
 	QPushButton* startButton =
 	    createButton ("Start MixKey", ":/mixkey/images/start.svg", "startbutton");
@@ -170,7 +190,7 @@ void* createDocWidget ()
 	    createButton ("Repair MixKey Source", ":/mixkey/images/repair.svg", "repairbutton");
 
 	layout->addWidget (status);
-	layout->addWidget (addButton);
+	layout->addWidget (context.addBut);
 	layout->addWidget (startButton);
 	layout->addWidget (repairButton);
 
