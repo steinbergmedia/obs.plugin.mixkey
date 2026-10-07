@@ -20,10 +20,11 @@ enum SetupStatus
 	kNotOk
 };
 
-bool streamChannelExists ();
+bool streamChannelSourceExists ();
 void createStreamChannelSource ();
+bool isStreamChannelSource (obs_source_t* source);
+
 SetupStatus getCurrentSetupState ();
-bool isMixKeySource (obs_source_t* source);
 
 //------------------------------------------------------------------------
 } // namespace MixKey

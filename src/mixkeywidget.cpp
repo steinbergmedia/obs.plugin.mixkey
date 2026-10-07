@@ -31,11 +31,10 @@ static Context context;
 //------------------------------------------------------------------------
 static void addSource ()
 {
-	if (streamChannelExists ())
+	if (streamChannelSourceExists ())
 		return;
 
 	createStreamChannelSource ();
-	return;
 }
 
 //------------------------------------------------------------------------
@@ -69,81 +68,77 @@ static QPushButton* createButton (const QString& text, const QString& iconPath,
 static void onSourceCreate (void* /*param*/, calldata_t* cd)
 {
 	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
-
-	if (!source)
+	if (!isStreamChannelSource (source))
 		return;
 
-	obs_source_type type = obs_source_get_type (source);
-	if (type != OBS_SOURCE_TYPE_INPUT)
-		return;
-
-	const char* name = obs_source_get_name (source);
-	const char* id = obs_source_get_id (source);
-	const bool mixKeySourceFound = isMixKeySource (source);
-
-	blog (LOG_INFO, "[SMTG] Source created: name='%s', id='%s' mixkey='%s' ", name ? name : "",
-	      id ? id : "", mixKeySourceFound ? "yes" : "no");
+	blog (LOG_INFO, "[MixKey] Create source '%s'", obs_source_get_name (source));
 }
 
 //------------------------------------------------------------------------
 static void onSourceUpdate (void* /*param*/, calldata_t* cd)
 {
 	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
-	if (!source)
+	if (!isStreamChannelSource (source))
 		return;
 
-	const obs_source_type type = obs_source_get_type (source);
-	if (type != OBS_SOURCE_TYPE_INPUT)
-		return;
-
-	const char* name = obs_source_get_name (source);
-	const char* id = obs_source_get_id (source);
-	const bool mixKeySourceFound = isMixKeySource (source);
-
-	blog (LOG_INFO, "[SMTG] Source updated: name='%s', id='%s' mixkey='%s' ", name ? name : "",
-	      id ? id : "", mixKeySourceFound ? "yes" : "no");
+	blog (LOG_INFO, "[MixKey] Update source '%s'", obs_source_get_name (source));
 }
 
 //------------------------------------------------------------------------
 static void onSourceDestroy (void* /*param*/, calldata_t* cd)
 {
 	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
-	if (!source)
+	if (!isStreamChannelSource (source))
 		return;
 
-	const obs_source_type type = obs_source_get_type (source);
-	if (type != OBS_SOURCE_TYPE_INPUT)
-		return;
-
-	const char* name = obs_source_get_name (source);
-	const char* id = obs_source_get_id (source);
-	const bool mixKeySourceFound = isMixKeySource (source);
-
-	blog (LOG_INFO, "[SMTG] Source destroyed: name='%s', id='%s' mixkey='%s' ", name ? name : "",
-	      id ? id : "", mixKeySourceFound ? "yes" : "no");
+	blog (LOG_INFO, "[MixKey] Destroy source '%s'", obs_source_get_name (source));
 }
 
 //------------------------------------------------------------------------
 static void onSourceRename (void* /*param*/, calldata_t* cd)
 {
 	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
-	if (!source)
+	if (!isStreamChannelSource (source))
 		return;
 
-	const obs_source_type type = obs_source_get_type (source);
-	if (type != OBS_SOURCE_TYPE_INPUT)
+	const char* newName = calldata_string (cd, "new_name");
+	const char* oldName = calldata_string (cd, "prev_name");
+
+	if (!newName || !oldName)
 		return;
 
-	const char* new_name = calldata_string (cd, "new_name");
-	const char* prev_name = calldata_string (cd, "prev_name");
+	blog (LOG_INFO, "[MixKey] Rename source: '%s' -> '%s'", oldName, newName);
+}
 
-	if (!new_name || !prev_name)
-		return;
+//------------------------------------------------------------------------
+static void connectSourceCallbacks (Context& context)
+{
+	signal_handler_t* handler = obs_get_signal_handler ();
+	if (handler)
+	{
+		context.handler = handler;
 
-	const bool mixKeySourceFound = isMixKeySource (source);
+		signal_handler_connect (handler, "source_create", onSourceCreate, &context);
+		signal_handler_connect (handler, "source_update", onSourceUpdate, &context);
+		signal_handler_connect (handler, "source_destroy", onSourceDestroy, &context);
+		signal_handler_connect (handler, "source_rename", onSourceRename, &context);
+	}
+}
 
-	blog (LOG_INFO, "[SMTG] Source renamed: '%s' -> '%s' mixkey='%s'", prev_name, new_name,
-	      mixKeySourceFound ? "yes" : "no");
+//------------------------------------------------------------------------
+static void disconnectSourceCallbacks (Context& context)
+{
+	if (context.handler)
+	{
+		signal_handler_t* handler = context.handler;
+
+		signal_handler_disconnect (handler, "source_create", onSourceCreate, &context);
+		signal_handler_disconnect (handler, "source_update", onSourceUpdate, &context);
+		signal_handler_disconnect (handler, "source_destroy", onSourceDestroy, &context);
+		signal_handler_disconnect (handler, "source_rename", onSourceRename, &context);
+
+		context.handler = nullptr;
+	}
 }
 
 //------------------------------------------------------------------------
@@ -167,7 +162,6 @@ void* createDocWidget ()
 	QPushButton* addButton = createButton (
 	    "Add MixKey Source", "C:\\Users\\ABruehl\\Downloads\\Vector.svg", "addbutton");
 	QPushButton::connect (addButton, &QPushButton::pressed, [] () { addSource (); });
-	addButton->setDisabled (streamChannelExists ());
 
 	QPushButton* startButton =
 	    createButton ("Start MixKey", "C:\\Users\\ABruehl\\Downloads\\start.svg", "startbutton");
@@ -198,16 +192,7 @@ void* createDocWidget ()
 		}
 	};
 
-	signal_handler_t* handler = obs_get_signal_handler ();
-	if (handler)
-	{
-		context.handler = handler;
-
-		signal_handler_connect (handler, "source_create", onSourceCreate, nullptr);
-		signal_handler_connect (handler, "source_update", onSourceUpdate, nullptr);
-		signal_handler_connect (handler, "source_destroy", onSourceDestroy, nullptr);
-		signal_handler_connect (handler, "source_rename", onSourceRename, nullptr);
-	}
+	connectSourceCallbacks (context);
 
 	return (void*)dock;
 }
@@ -215,17 +200,7 @@ void* createDocWidget ()
 //------------------------------------------------------------------------
 void destroyDocWidget ()
 {
-	if (context.handler)
-	{
-		signal_handler_t* handler = context.handler;
-
-		signal_handler_disconnect (handler, "source_create", onSourceCreate, nullptr);
-		signal_handler_disconnect (handler, "source_update", onSourceUpdate, nullptr);
-		signal_handler_disconnect (handler, "source_destroy", onSourceDestroy, nullptr);
-		signal_handler_disconnect (handler, "source_rename", onSourceRename, nullptr);
-
-		context.handler = nullptr;
-	}
+	disconnectSourceCallbacks (context);
 
 	context.client->onConnectionStateChanged = nullptr;
 }

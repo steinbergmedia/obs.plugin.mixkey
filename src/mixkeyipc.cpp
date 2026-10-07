@@ -40,7 +40,7 @@ void Client::initSocket ()
 	socket = new QLocalSocket (this);
 
 	connect (socket, &QLocalSocket::connected, this, [this] () {
-		qDebug ("[SMTG] Connected to MixKey.");
+		qDebug ("[MixKey] Connected to MixKey.");
 
 		if (onConnectionStateChanged)
 			onConnectionStateChanged (State::kConnected);
@@ -50,7 +50,7 @@ void Client::initSocket ()
 	});
 
 	connect (socket, &QLocalSocket::disconnected, this, [this] () {
-		qDebug ("[SMTG] Disconnected from MixKey.");
+		qDebug ("[MixKey] Disconnected from MixKey.");
 
 		if (onConnectionStateChanged)
 			onConnectionStateChanged (State::kDisconnected);
@@ -59,7 +59,7 @@ void Client::initSocket ()
 	});
 
 	connect (socket, &QLocalSocket::errorOccurred, this, [this] (QLocalSocket::LocalSocketError) {
-		// qDebug ("[SMTG] Socket error occurred. Try again to connect to MixKey.");
+		// qDebug ("[MixKey] Socket error occurred. Try again to connect to MixKey.");
 		timer->start ();
 	});
 

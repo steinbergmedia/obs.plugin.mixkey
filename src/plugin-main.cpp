@@ -29,7 +29,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 bool obs_module_load(void)
 {
-	obs_log(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
+	blog (LOG_INFO, "[MixKey] Plugin loaded successfully (version %s)", PLUGIN_VERSION);
 
 	void* dock = MixKey::createDocWidget ();
 	obs_frontend_add_dock_by_id ("MK2347865342876432", "MixKey Setup", dock);
@@ -40,5 +40,6 @@ bool obs_module_load(void)
 void obs_module_unload(void)
 {
 	MixKey::destroyDocWidget ();
-	obs_log(LOG_INFO, "plugin unloaded");
+	
+	blog (LOG_INFO, "[MixKey] Plugin unloaded");
 }
