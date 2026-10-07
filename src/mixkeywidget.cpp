@@ -159,15 +159,15 @@ void* createDocWidget ()
 	status->setStyleSheet ("color: red;");
 	status->setFixedHeight (38);
 
-	QPushButton* addButton = createButton (
-	    "Add MixKey Source", "C:\\Users\\ABruehl\\Downloads\\Vector.svg", "addbutton");
+	QPushButton* addButton =
+	    createButton ("Add MixKey Source", ":/mixkey/images/add.svg", "addbutton");
 	QPushButton::connect (addButton, &QPushButton::pressed, [] () { addSource (); });
 
 	QPushButton* startButton =
-	    createButton ("Start MixKey", "C:\\Users\\ABruehl\\Downloads\\start.svg", "startbutton");
+	    createButton ("Start MixKey", ":/mixkey/images/start.svg", "startbutton");
 
-	QPushButton* repairButton = createButton (
-	    "Repair MixKey Source", "C:\\Users\\ABruehl\\Downloads\\repair.svg", "repairbutton");
+	QPushButton* repairButton =
+	    createButton ("Repair MixKey Source", ":/mixkey/images/repair.svg", "repairbutton");
 
 	layout->addWidget (status);
 	layout->addWidget (addButton);
