@@ -15,6 +15,7 @@
 #include <QPointer>
 #include <QProcess>
 #include <QPushButton>
+#include <QSettings>
 #include <QWidget>
 
 #include "obs.h"
@@ -38,12 +39,6 @@ static void startMixKeyApp ()
 }
 
 //------------------------------------------------------------------------
-static void repairMixKeyConection ()
-{
-	// Implement Me!
-}
-
-//------------------------------------------------------------------------
 struct Context
 {
 	Client* client {nullptr};
@@ -56,6 +51,13 @@ struct Context
 };
 
 static Context context;
+
+//------------------------------------------------------------------------
+static void repairMixKeyConnection ()
+{
+	removeBrokenStreamChannelCandidates ();
+	createStreamChannelSource ();
+}
 
 //------------------------------------------------------------------------
 static void addSource ()
@@ -249,7 +251,7 @@ void* createDocWidget ()
 	context.repairBut =
 	    createButton ("Repair MixKey Source", ":/mixkey/images/repair.svg", "repairbutton");
 	QPushButton::connect (context.repairBut, &QPushButton::pressed,
-	                      [] () { repairMixKeyConection (); });
+	                      [] () { repairMixKeyConnection (); });
 
 	layout->addWidget (status);
 	layout->addWidget (context.addBut);

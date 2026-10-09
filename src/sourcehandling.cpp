@@ -169,5 +169,30 @@ bool isStreamChannelSource (obs_source_t* source)
 	return deviceId == kSteinbergMixKeyStreamDeviceId;
 }
 
+void removeBrokenStreamChannelCandidates ()
+{
+	for (uint32_t channel = kAuxDevice1; channel <= kAuxDevice4; ++channel)
+	{
+		obs_source_t* existingSource = obs_get_output_source (channel);
+		if (existingSource)
+		{
+			const char* name = obs_source_get_name (existingSource);
+			obs_data_t* settings = obs_source_get_settings (existingSource);
+
+			const char* deviceId = obs_data_get_string (settings, "device_id");
+
+			if (strcmp (deviceId, kSteinbergMixKeyStreamDeviceId) == 0 ||
+			    strcmp (name, "MixKey") == 0)
+			{
+				blog (LOG_INFO, "[MixKey] removing broken channel at index %u", channel);
+				obs_set_output_source (channel, nullptr);
+			}
+
+			obs_data_release (settings);
+		}
+		obs_source_release (existingSource);
+	}
+}
+
 //------------------------------------------------------------------------
 }
