@@ -33,6 +33,7 @@ const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
 //------------------------------------------------------------------------
 static bool enumSourcesCallback (void* /*data*/, obs_source_t* source)
 {
+	data;
 	const char* name = obs_source_get_name (source);
 	const char* id = obs_source_get_id (source);
 	blog (LOG_INFO, "Source: name='%s'  id='%s'", name, id);
