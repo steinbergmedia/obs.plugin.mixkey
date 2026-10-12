@@ -23,6 +23,26 @@ endif()
 
 if(ENABLE_QT)
   find_package(Qt6 COMPONENTS Widgets Core Network)
+  
+  # the current obs plugin works with obs 31.1
+  # if we move over to obs 32, we should be able to
+  # remove this hook
+  # it removes AGL from the dependencies
+  # AGL is not part of new mac os (26)
+  if(APPLE AND TARGET WrapOpenGL::WrapOpenGL)
+    get_target_property(_libs
+      WrapOpenGL::WrapOpenGL
+      INTERFACE_LINK_LIBRARIES
+    )
+
+    if(_libs)
+      list(FILTER _libs EXCLUDE REGEX "AGL")
+      set_target_properties(WrapOpenGL::WrapOpenGL
+        PROPERTIES INTERFACE_LINK_LIBRARIES "${_libs}"
+      )
+    endif()
+  endif()
+  
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets Qt6::Network)
   target_compile_options(
     ${CMAKE_PROJECT_NAME}
