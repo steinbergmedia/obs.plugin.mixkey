@@ -223,25 +223,6 @@ void* createDocWidget ()
 
 	context.client = new Client (dock);
 
-	QLabel* status = createStatus ();
-	context.client->onConnectionStateChanged = [status] (const Client::State state) {
-		switch (state)
-		{
-			case Client::State::kConnected:
-			{
-				status->setStyleSheet ("color: green;");
-				status->setText ("Online");
-				break;
-			}
-			case Client::State::kDisconnected:
-			{
-				status->setStyleSheet ("color: red;");
-				status->setText ("Offline");
-				break;
-			}
-		}
-	};
-
 	context.addBut = createButton ("Add MixKey Source", ":/mixkey/images/add.svg", "addbutton");
 	QPushButton::connect (context.addBut, &QPushButton::pressed, [] () { addSource (); });
 
@@ -252,6 +233,30 @@ void* createDocWidget ()
 	    createButton ("Repair MixKey Source", ":/mixkey/images/repair.svg", "repairbutton");
 	QPushButton::connect (context.repairBut, &QPushButton::pressed,
 	                      [] () { repairMixKeyConnection (); });
+
+	QPointer<QPushButton> startBut = context.startBut;
+	QLabel* status = createStatus ();
+	context.client->onConnectionStateChanged = [status, startBut] (const Client::State state) {
+		switch (state)
+		{
+			case Client::State::kConnected:
+			{
+				status->setStyleSheet ("color: green;");
+				status->setText ("Online");
+				if (startBut)
+					startBut->setDisabled (true);
+				break;
+			}
+			case Client::State::kDisconnected:
+			{
+				status->setStyleSheet ("color: red;");
+				status->setText ("Offline");
+				if (startBut)
+					startBut->setEnabled (true);
+				break;
+			}
+		}
+	};
 
 	layout->addWidget (status);
 	layout->addWidget (context.addBut);
