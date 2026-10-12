@@ -83,14 +83,14 @@ static void addIcon (const QString& iconPath, QPushButton* button)
 }
 
 //------------------------------------------------------------------------
-static QPushButton* createButton (const QString& text, const QString& iconPath,
+static QPushButton* createButton (const QString& text, const QString& /*iconPath*/,
                                   const QString& objectName)
 {
 	QPushButton* button = new QPushButton ();
 	button->setText (text);
 	button->setObjectName (objectName);
 
-	addIcon (iconPath, button);
+	// addIcon (iconPath, button);
 
 	return button;
 }
