@@ -19,6 +19,7 @@
 #include <QWidget>
 
 #include "obs.h"
+#include <obs-module.h>
 
 namespace MixKey {
 
@@ -83,11 +84,11 @@ static void addIcon (const QString& iconPath, QPushButton* button)
 }
 
 //------------------------------------------------------------------------
-static QPushButton* createButton (const QString& text, const QString& /*iconPath*/,
+static QPushButton* createButton (const char* textId, const QString& /*iconPath*/,
                                   const QString& objectName)
 {
 	QPushButton* button = new QPushButton ();
-	button->setText (text);
+	button->setText (QString::fromUtf8 (obs_module_text (textId)));
 	button->setObjectName (objectName);
 
 	// addIcon (iconPath, button);
@@ -223,14 +224,15 @@ void* createDocWidget ()
 
 	context.client = new Client (dock);
 
-	context.addBut = createButton ("Add MixKey Source", ":/mixkey/images/add.svg", "addbutton");
+	context.addBut = createButton ("MixKey.AddButtonText", ":/mixkey/images/add.svg", "addbutton");
 	QPushButton::connect (context.addBut, &QPushButton::pressed, [] () { addSource (); });
 
-	context.startBut = createButton ("Start MixKey", ":/mixkey/images/start.svg", "startbutton");
+	context.startBut =
+	    createButton ("MixKey.StartButton", ":/mixkey/images/start.svg", "startbutton");
 	QPushButton::connect (context.startBut, &QPushButton::pressed, [] () { startMixKeyApp (); });
 
 	context.repairBut =
-	    createButton ("Repair MixKey Source", ":/mixkey/images/repair.svg", "repairbutton");
+	    createButton ("MixKey.RepairButton", ":/mixkey/images/repair.svg", "repairbutton");
 	QPushButton::connect (context.repairBut, &QPushButton::pressed,
 	                      [] () { repairMixKeyConnection (); });
 
