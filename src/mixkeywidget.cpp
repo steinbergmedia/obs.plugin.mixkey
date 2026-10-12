@@ -23,22 +23,6 @@
 namespace MixKey {
 
 //------------------------------------------------------------------------
-static void startMixKeyApp ()
-{
-#if defined(_WIN32)
-	const QSettings settings (
-	    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\MixKey.exe",
-	    QSettings::NativeFormat);
-	const QString location = settings.value ("Path").toString ();
-	QProcess::startDetached (location);
-#elif __APPLE__
-	QProcess::startDetached ("open", {"-a", "MixKey"});
-#elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
-	QProcess::startDetached ("open", {"MixKey"});
-#endif
-}
-
-//------------------------------------------------------------------------
 struct Context
 {
 	Client* client {nullptr};
@@ -51,6 +35,22 @@ struct Context
 };
 
 static Context context;
+
+//------------------------------------------------------------------------
+static void startMixKeyApp ()
+{
+#if defined(_WIN32)
+	const QSettings settings (
+		"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\MixKey.exe",
+		QSettings::NativeFormat);
+	const QString location = settings.value ("Path").toString ();
+	QProcess::startDetached (location);
+#elif __APPLE__
+	QProcess::startDetached ("open", {"-a", "MixKey_debug"});
+#elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
+	QProcess::startDetached ("open", {"MixKey"});
+#endif
+}
 
 //------------------------------------------------------------------------
 static void repairMixKeyConnection ()
