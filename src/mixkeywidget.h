@@ -8,4 +8,10 @@
 
 #pragma once
 
-namespace MixKey { void* createDocWidget (); }
+namespace MixKey {
+
+//------------------------------------------------------------------------
+void* createDocWidget ();
+void destroyDocWidget ();
+//------------------------------------------------------------------------
+} // namespace MixKey

@@ -7,146 +7,275 @@
 //------------------------------------------------------------------------
 #include "mixkeywidget.h"
 
+#include "mixkeyipc.h"
+#include "sourcehandling.h"
+
 #include <QBoxLayout>
 #include <QLabel>
-#include <QPalette>
+#include <QPointer>
 #include <QProcess>
 #include <QPushButton>
+#include <QSettings>
 #include <QWidget>
-#include <obs-frontend-api.h>
+
+#include "obs.h"
 #include <obs-module.h>
 
 namespace MixKey {
 
 //------------------------------------------------------------------------
-const char* kSteinbergMixKeyStreamDeviceId =
-    "{0.0.1.00000000}.{0d18d47c-45ed-4ad2-ab39-7432ca979209}";
+struct Context
+{
+	Client* client {nullptr};
+	signal_handler_t* handler {nullptr};
+	obs_source_t* source {nullptr};
 
-#if defined (_WIN32)
-const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
-#elif __APPLE__
-const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
-#elif (defined (__gnu_linux__) && __gnu_linux__) || (defined (__linux__) && __linux__)
-#error "Implement Me!"
-#endif
+	QPointer<QPushButton> addBut;
+	QPointer<QPushButton> startBut;
+	QPointer<QPushButton> repairBut;
+};
+
+static Context context;
 
 //------------------------------------------------------------------------
-static bool enumSourcesCallback (void* /*data*/, obs_source_t* source)
+static void startMixKeyApp ()
 {
-	if (data == nullptr)
-		return true;
-	const char* name = obs_source_get_name (source);
-	const char* id = obs_source_get_id (source);
-	blog (LOG_INFO, "Source: name='%s'  id='%s'", name, id);
-	return true;
+#if defined(_WIN32)
+	const QSettings settings (
+		"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\MixKey.exe",
+		QSettings::NativeFormat);
+	const QString location = settings.value ("Path").toString ();
+	QProcess::startDetached (location);
+#elif __APPLE__
+	QProcess::startDetached ("open", {"-a", "MixKey_debug"});
+#elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
+	QProcess::startDetached ("open", {"MixKey"});
+#endif
 }
 
 //------------------------------------------------------------------------
-static void inspectSourceProperties (obs_source_t* source)
+static void repairMixKeyConnection ()
 {
-	obs_properties_t* props = obs_source_properties (source);
-	if (!props)
-		return;
-	obs_property_t* prop = obs_properties_get (props, "device_id");
-
-	if (!prop)
-		return;
-
-	if (obs_property_get_type (prop) == OBS_PROPERTY_LIST)
-	{
-		size_t count = obs_property_list_item_count (prop);
-
-		for (size_t i = 0; i < count; i++)
-		{
-			const char* name = obs_property_list_item_name (prop, i);
-			const char* value = obs_property_list_item_string (prop, i);
-			blog (LOG_INFO, "Source: name='%s'  value='%s'", name, value);
-
-			if (QString (value) != kSteinbergMixKeyStreamDeviceId)
-				continue;
-			obs_data_t* settings = obs_source_get_settings (source);
-			obs_data_set_string (settings, "device_id", value);
-			obs_source_update (source, settings);
-			obs_data_release (settings);
-			break;
-		}
-	}
-
-	obs_properties_destroy (props);
+	removeBrokenStreamChannelCandidates ();
+	createStreamChannelSource ();
 }
 
 //------------------------------------------------------------------------
 static void addSource ()
 {
-	obs_source_t* source = obs_source_create (kAudioInputCaptureSourceId, "Mixkey", 0, nullptr);
-	if (!source)
+	if (streamChannelSourceExists ())
 		return;
 
-	inspectSourceProperties (source);
-	obs_source_t* scene_source = obs_frontend_get_current_scene ();
-	if (!scene_source)
+	createStreamChannelSource ();
+}
+
+//------------------------------------------------------------------------
+static void addIcon (const QString& iconPath, QPushButton* button)
+{
+	if (iconPath.isEmpty () || button == nullptr)
 		return;
-	obs_scene_t* scene = obs_scene_from_source (scene_source);
-	obs_scene_add (scene, source);
-	obs_source_release (source);
+
+	static const QSize kIconSize = QSize (10, 10);
+
+	QIcon icon;
+	icon.addFile (iconPath, kIconSize);
+	button->setIcon (icon);
+	button->setIconSize (kIconSize);
+}
+
+//------------------------------------------------------------------------
+static QPushButton* createButton (const char* textId, const QString& /*iconPath*/,
+                                  const QString& objectName)
+{
+	QPushButton* button = new QPushButton ();
+	button->setText (QString::fromUtf8 (obs_module_text (textId)));
+	button->setObjectName (objectName);
+
+	// addIcon (iconPath, button);
+
+	return button;
+}
+
+//------------------------------------------------------------------------
+static QLabel* createStatus ()
+{
+	QLabel* status = new QLabel ();
+	status->setText ("Offline");
+	status->setAlignment (Qt::AlignCenter);
+	status->setStyleSheet ("color: red;");
+	status->setFixedHeight (38);
+
+	return status;
+}
+
+//------------------------------------------------------------------------
+static QVBoxLayout* createBoxLayout (QWidget* parent)
+{
+	auto layout = new QVBoxLayout (parent);
+	layout->setContentsMargins (6, 6, 6, 6);
+	layout->setSpacing (0);
+	layout->setAlignment (Qt::AlignTop);
+
+	if (parent)
+		parent->setLayout (layout);
+
+	return layout;
+}
+
+//------------------------------------------------------------------------
+static void onSourceCreate (void* param, calldata_t* cd)
+{
+	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
+	if (!isStreamChannelSource (source))
+		return;
+
+	blog (LOG_INFO, "[MixKey] Create source '%s'", obs_source_get_name (source));
+
+	auto* context = static_cast<Context*> (param);
+	if (!context || !context->addBut)
+		return;
+
+	context->source = source;
+	context->addBut->setDisabled (true);
+}
+
+//------------------------------------------------------------------------
+static void onSourceUpdate (void* /*param*/, calldata_t* cd)
+{
+	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
+	if (!isStreamChannelSource (source))
+		return;
+
+	blog (LOG_INFO, "[MixKey] Update source '%s'", obs_source_get_name (source));
+}
+
+//------------------------------------------------------------------------
+static void onSourceDestroy (void* param, calldata_t* cd)
+{
+	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
+	if (!isStreamChannelSource (source))
+		return;
+
+	blog (LOG_INFO, "[MixKey] Destroy source '%s'", obs_source_get_name (source));
+
+	auto* context = static_cast<Context*> (param);
+	if (!context || !context->addBut)
+		return;
+
+	if (context->source != source)
+		return;
+
+	context->source = nullptr;
+	context->addBut->setEnabled (true);
+}
+
+//------------------------------------------------------------------------
+static void onSourceRename (void* /*param*/, calldata_t* cd)
+{
+	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
+	if (!isStreamChannelSource (source))
+		return;
+
+	const char* newName = calldata_string (cd, "new_name");
+	const char* oldName = calldata_string (cd, "prev_name");
+
+	if (!newName || !oldName)
+		return;
+
+	blog (LOG_INFO, "[MixKey] Rename source: '%s' -> '%s'", oldName, newName);
+}
+
+//------------------------------------------------------------------------
+static void connectSourceCallbacks (Context& context)
+{
+	signal_handler_t* handler = obs_get_signal_handler ();
+	if (handler)
+	{
+		context.handler = handler;
+
+		signal_handler_connect (handler, "source_create", onSourceCreate, &context);
+		signal_handler_connect (handler, "source_update", onSourceUpdate, &context);
+		signal_handler_connect (handler, "source_destroy", onSourceDestroy, &context);
+		signal_handler_connect (handler, "source_rename", onSourceRename, &context);
+	}
+}
+
+//------------------------------------------------------------------------
+static void disconnectSourceCallbacks (Context& context)
+{
+	if (context.handler)
+	{
+		signal_handler_t* handler = context.handler;
+
+		signal_handler_disconnect (handler, "source_create", onSourceCreate, &context);
+		signal_handler_disconnect (handler, "source_update", onSourceUpdate, &context);
+		signal_handler_disconnect (handler, "source_destroy", onSourceDestroy, &context);
+		signal_handler_disconnect (handler, "source_rename", onSourceRename, &context);
+
+		context.handler = nullptr;
+	}
 }
 
 //------------------------------------------------------------------------
 void* createDocWidget ()
 {
 	QWidget* dock = new QWidget ();
-	QVBoxLayout* layout = new QVBoxLayout (dock);
-	layout->setContentsMargins (6, 6, 6, 6);
-	layout->setSpacing (0);
-	layout->setAlignment (Qt::AlignTop);
-	dock->setLayout (layout);
+	QVBoxLayout* layout = createBoxLayout (dock);
 
-	QLabel* box = new QLabel ();
-	box->setText ("SOURCE REQUIRED");
-	box->setAlignment (Qt::AlignCenter);
+	context.client = new Client (dock);
 
-	QPushButton* addButton = new QPushButton ();
-	QPushButton::connect (addButton, &QPushButton::pressed, [] () {
-		//
-		obs_enum_sources (enumSourcesCallback, nullptr);
-		addSource ();
-	});
+	context.addBut = createButton ("MixKey.AddButtonText", ":/mixkey/images/add.svg", "addbutton");
+	QPushButton::connect (context.addBut, &QPushButton::pressed, [] () { addSource (); });
 
-	addButton->setText ("Add MixKey Source");
-	QIcon icon;
-	icon.addFile (QString ("C:\\Users\\ABruehl\\Downloads\\Vector.svg"), QSize (10, 10));
-	addButton->setIcon (icon);
-	addButton->setIconSize (QSize (10, 10));
+	context.startBut =
+	    createButton ("MixKey.StartButton", ":/mixkey/images/start.svg", "startbutton");
+	QPushButton::connect (context.startBut, &QPushButton::pressed, [] () { startMixKeyApp (); });
 
-	QPushButton* startButton = new QPushButton ();
-	QPushButton::connect (startButton, &QPushButton::pressed, [] () {});
+	context.repairBut =
+	    createButton ("MixKey.RepairButton", ":/mixkey/images/repair.svg", "repairbutton");
+	QPushButton::connect (context.repairBut, &QPushButton::pressed,
+	                      [] () { repairMixKeyConnection (); });
 
-	startButton->setText ("Start MixKey");
-	QIcon startIcon;
-	startIcon.addFile (QString ("C:\\Users\\ABruehl\\Downloads\\start.svg"), QSize (10, 10));
-	startButton->setIcon (startIcon);
-	startButton->setIconSize (QSize (10, 10));
+	QPointer<QPushButton> startBut = context.startBut;
+	QLabel* status = createStatus ();
+	context.client->onConnectionStateChanged = [status, startBut] (const Client::State state) {
+		switch (state)
+		{
+			case Client::State::kConnected:
+			{
+				status->setStyleSheet ("color: green;");
+				status->setText ("Online");
+				if (startBut)
+					startBut->setDisabled (true);
+				break;
+			}
+			case Client::State::kDisconnected:
+			{
+				status->setStyleSheet ("color: red;");
+				status->setText ("Offline");
+				if (startBut)
+					startBut->setEnabled (true);
+				break;
+			}
+		}
+	};
 
-	QPushButton* repairButton = new QPushButton ();
-	QPushButton::connect (repairButton, &QPushButton::pressed, [] () {});
-	repairButton->setText ("Repair MixKey Source");
-	QIcon repairIcon;
-	repairIcon.addFile (QString ("C:\\Users\\ABruehl\\Downloads\\repair.svg"), QSize (10, 10));
-	repairButton->setIcon (repairIcon);
-	repairButton->setIconSize (QSize (10, 10));
+	layout->addWidget (status);
+	layout->addWidget (context.addBut);
+	layout->addWidget (context.startBut);
+	layout->addWidget (context.repairBut);
 
-	QLabel* label =
-	    new QLabel ("Click \"Add MixKey Source\" to add the MixKey your in Sources list.");
-	label->setAlignment (Qt::AlignCenter);
-	label->setWordWrap (true);
-
-	layout->addWidget (box);
-	layout->addWidget (label);
-	layout->addWidget (addButton);
-	layout->addWidget (startButton);
-	layout->addWidget (repairButton);
+	connectSourceCallbacks (context);
 
 	return (void*)dock;
+}
+
+//------------------------------------------------------------------------
+void destroyDocWidget ()
+{
+	disconnectSourceCallbacks (context);
+
+	context.client->onConnectionStateChanged = nullptr;
 }
 
 //------------------------------------------------------------------------
