@@ -48,3 +48,4 @@ CMakeFiles
 CMakeCache.txt
 build_macos
 build_x64
+cmake/.CMakeBuildNumber
