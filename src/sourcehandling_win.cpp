@@ -176,9 +176,11 @@ static std::string findPort ()
 	std::wstring endpointId;
 
 	bool result = findVirtualAudioEndpoints (driverID, endPointName, endpointId);
-	result = result;
 
 	CoUninitialize (); // if not already done
+
+	if (!result)
+		return {};
 
 	return convert (endpointId);
 }
