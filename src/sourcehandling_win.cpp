@@ -58,7 +58,8 @@ static std::string convert (const std::wstring& wide_string)
 }
 
 // ------------------------------------------------------------------------------------------------
-bool getPropertyKeyStringValue (IMMDevice* pDevice, const PROPERTYKEY pkey, std::wstring& wstrValue)
+static bool getPropertyKeyStringValue (IMMDevice* pDevice, const PROPERTYKEY pkey,
+                                       std::wstring& wstrValue)
 {
 	bool valueFound = false;
 
@@ -164,7 +165,7 @@ static bool findVirtualAudioEndpoints (const std::wstring driverID, const std::w
 }
 
 //------------------------------------------------------------------------
-std::string findPort ()
+static std::string findPort ()
 {
 	CoInitialize (NULL); // if not already done
 
