@@ -18,14 +18,12 @@ namespace MixKey {
 const char* kSourceName = "MixKey";
 const char* kDeviceIdString = "device_id";
 
+//------------------------------------------------------------------------
 // https://github.com/obsproject/obs-studio/blob/master/libobs/obs-audio.c#L52
 #if defined(_WIN32)
 const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
-const char* kSteinbergMixKeyStreamDeviceId =
-    "{0.0.1.00000000}.{0d18d47c-45ed-4ad2-ab39-7432ca979209}";
 #elif __APPLE__
 const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
-const char* kSteinbergMixKeyStreamDeviceId = "SteinbergMixKey:Stream";
 #elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
 const char* kAudioInputCaptureSourceId = "pulse_output_capture";
 #endif
@@ -95,8 +93,8 @@ static int32_t addToFirstFreeAuxChannel (obs_source_t* source)
 static obs_data_t* createSourceSettings ()
 {
 	obs_data_t* settings = obs_data_create ();
-	obs_data_set_string (settings, kDeviceIdString, kSteinbergMixKeyStreamDeviceId);
-	
+	obs_data_set_string (settings, kDeviceIdString, findStreamDeviceId ().c_str ());
+
 	return settings;
 }
 
@@ -116,7 +114,7 @@ bool streamChannelSourceExists ()
 			continue;
 
 		const std::string_view deviceId = obs_data_get_string (settings, kDeviceIdString);
-		found = (deviceId == kSteinbergMixKeyStreamDeviceId);
+		found = (deviceId == findStreamDeviceId ());
 
 		obs_data_release (settings);
 		obs_source_release (source);
@@ -166,7 +164,7 @@ bool isStreamChannelSource (obs_source_t* source)
 		return false;
 
 	const std::string_view deviceId = obs_data_get_string (settings, kDeviceIdString);
-	return deviceId == kSteinbergMixKeyStreamDeviceId;
+	return deviceId == findStreamDeviceId ();
 }
 
 void removeBrokenStreamChannelCandidates ()
@@ -181,8 +179,7 @@ void removeBrokenStreamChannelCandidates ()
 
 			const char* deviceId = obs_data_get_string (settings, "device_id");
 
-			if (strcmp (deviceId, kSteinbergMixKeyStreamDeviceId) == 0 ||
-			    strcmp (name, "MixKey") == 0)
+			if (deviceId == findStreamDeviceId () || strcmp (name, "MixKey") == 0)
 			{
 				blog (LOG_INFO, "[MixKey] removing broken channel at index %u", channel);
 				obs_set_output_source (channel, nullptr);
