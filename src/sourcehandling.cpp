@@ -18,14 +18,12 @@ namespace MixKey {
 const char* kSourceName = "MixKey";
 const char* kDeviceIdString = "device_id";
 
+//------------------------------------------------------------------------
 // https://github.com/obsproject/obs-studio/blob/master/libobs/obs-audio.c#L52
 #if defined(_WIN32)
 const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
-const char* kSteinbergMixKeyStreamDeviceId =
-    "{0.0.1.00000000}.{0d18d47c-45ed-4ad2-ab39-7432ca979209}";
 #elif __APPLE__
 const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
-const char* kSteinbergMixKeyStreamDeviceId = "SteinbergMixKey:Stream";
 #elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
 const char* kAudioInputCaptureSourceId = "pulse_output_capture";
 #endif
@@ -51,6 +49,80 @@ enum BasicAudioDevice
 
 };
 
+//------------------------------------------------------------------------
+static void addStreamDeviceToSourceProperties (obs_source_t* source)
+{
+	obs_properties_t* props = obs_source_properties (source);
+	if (props == nullptr)
+		return;
+
+	obs_property_t* prop = obs_properties_get (props, kDeviceIdString);
+	if (prop == nullptr)
+		return;
+
+	if (obs_property_get_type (prop) == OBS_PROPERTY_LIST)
+	{
+		const size_t count = obs_property_list_item_count (prop);
+		for (size_t i = 0; i < count; i++)
+		{
+			const char* name = obs_property_list_item_name (prop, i);
+			const char* value = obs_property_list_item_string (prop, i);
+			blog (LOG_INFO, "[SMTG] Source: name='%s'  value='%s'", name, value);
+
+			if (std::string_view (value) != findStreamDeviceId ())
+				continue;
+
+			obs_data_t* settings = obs_source_get_settings (source);
+			if (!settings)
+				return;
+
+			obs_data_set_string (settings, kDeviceIdString, value);
+			obs_source_update (source, settings);
+			obs_data_release (settings);
+			break;
+		}
+	}
+
+	obs_properties_destroy (props);
+}
+//------------------------------------------------------------------------
+static bool enumSourcesCallback (void* /*data*/, obs_source_t* source)
+{
+	const char* name = obs_source_get_name (source);
+	const char* id = obs_source_get_id (source);
+
+	blog (LOG_INFO, "[SMTG] Source: name='%s'  id='%s'", name, id);
+	return true;
+}
+
+//------------------------------------------------------------------------
+static void enumSources ()
+{
+	obs_enum_sources (enumSourcesCallback, nullptr);
+}
+
+//------------------------------------------------------------------------
+static void enumOutputSources ()
+{
+	for (int32_t channel = 0; channel < MAX_CHANNELS; ++channel)
+	{
+		obs_source_t* source = obs_get_output_source (channel);
+		if (source == nullptr)
+			continue;
+
+		const char* name = obs_source_get_name (source);
+		const char* id = obs_source_get_id (source);
+		const char* uuid = obs_source_get_uuid (source);
+		obs_source_type type = obs_source_get_type (source);
+		if (type != OBS_SOURCE_TYPE_INPUT)
+			continue;
+
+		blog (LOG_INFO, "[SMTG] Source: name='%s'  id='%s' uuid='%s' type='%i'", name, id, uuid,
+		      type);
+
+		obs_source_release (source);
+	}
+}
 //------------------------------------------------------------------------
 static int32_t getFirstFreeAuxDeviceSlot ()
 {
@@ -95,8 +167,8 @@ static int32_t addToFirstFreeAuxChannel (obs_source_t* source)
 static obs_data_t* createSourceSettings ()
 {
 	obs_data_t* settings = obs_data_create ();
-	obs_data_set_string (settings, kDeviceIdString, kSteinbergMixKeyStreamDeviceId);
-	
+	obs_data_set_string (settings, kDeviceIdString, findStreamDeviceId ().c_str ());
+
 	return settings;
 }
 
@@ -116,7 +188,7 @@ bool streamChannelSourceExists ()
 			continue;
 
 		const std::string_view deviceId = obs_data_get_string (settings, kDeviceIdString);
-		found = (deviceId == kSteinbergMixKeyStreamDeviceId);
+		found = (deviceId == findStreamDeviceId ());
 
 		obs_data_release (settings);
 		obs_source_release (source);
@@ -166,7 +238,7 @@ bool isStreamChannelSource (obs_source_t* source)
 		return false;
 
 	const std::string_view deviceId = obs_data_get_string (settings, kDeviceIdString);
-	return deviceId == kSteinbergMixKeyStreamDeviceId;
+	return deviceId == findStreamDeviceId ();
 }
 
 void removeBrokenStreamChannelCandidates ()
@@ -181,8 +253,7 @@ void removeBrokenStreamChannelCandidates ()
 
 			const char* deviceId = obs_data_get_string (settings, "device_id");
 
-			if (strcmp (deviceId, kSteinbergMixKeyStreamDeviceId) == 0 ||
-			    strcmp (name, "MixKey") == 0)
+			if (deviceId == findStreamDeviceId () || strcmp (name, "MixKey") == 0)
 			{
 				blog (LOG_INFO, "[MixKey] removing broken channel at index %u", channel);
 				obs_set_output_source (channel, nullptr);

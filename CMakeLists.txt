@@ -65,4 +65,22 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     resources.qrc
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_sources (${CMAKE_PROJECT_NAME}
+        PRIVATE
+            src/sourcehandling_win.cpp
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_sources (${CMAKE_PROJECT_NAME}
+        PRIVATE
+            src/sourcehandling_mac.cpp
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_sources (${CMAKE_PROJECT_NAME}
+        PRIVATE
+            src/sourcehandling_linux.cpp
+    )
+endif()
+
+
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

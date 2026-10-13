@@ -9,6 +9,7 @@
 #pragma once
 
 #include "obs.h"
+#include <string>
 
 namespace MixKey {
 
@@ -26,6 +27,8 @@ bool isStreamChannelSource (obs_source_t* source);
 void removeBrokenStreamChannelCandidates ();
 
 SetupStatus getCurrentSetupState ();
+
+std::string findStreamDeviceId ();
 
 //------------------------------------------------------------------------
 } // namespace MixKey
