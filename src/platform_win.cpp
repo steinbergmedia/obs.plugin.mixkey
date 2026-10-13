@@ -21,6 +21,9 @@
 namespace MixKey {
 
 //---------------------------------------------------------------
+const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
+
+//---------------------------------------------------------------
 #define SAFE_RELEASE(punk)  \
 	if ((punk) != NULL)     \
 	{                       \
@@ -190,6 +193,12 @@ std::string findStreamDeviceId ()
 {
 	static const std::string kStreamDeviceId = findPort ();
 	return kStreamDeviceId;
+}
+
+//------------------------------------------------------------------------
+const char* findAudioInputCaptureSourceId ()
+{
+	return kAudioInputCaptureSourceId;
 }
 
 //------------------------------------------------------------------------

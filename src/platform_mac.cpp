@@ -8,16 +8,24 @@
 
 #include "sourcehandling.h"
 #include <string>
+#include <string_view>
 
 namespace MixKey {
 
 //---------------------------------------------------------------
 const char* kSteinbergMixKeyStreamDeviceId = "SteinbergMixKey:Stream";
+const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
 
 //---------------------------------------------------------------
 std::string findStreamDeviceId ()
 {
 	return kSteinbergMixKeyStreamDeviceId;
+}
+
+//------------------------------------------------------------------------
+const char* findAudioInputCaptureSourceId ()
+{
+	return kAudioInputCaptureSourceId;
 }
 
 //------------------------------------------------------------------------

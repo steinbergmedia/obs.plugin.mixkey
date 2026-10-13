@@ -28,7 +28,5 @@ void removeBrokenStreamChannels ();
 
 SetupStatus getCurrentSetupState ();
 
-std::string findStreamDeviceId ();
-
 //------------------------------------------------------------------------
 } // namespace MixKey

@@ -7,6 +7,7 @@
 //------------------------------------------------------------------------
 
 #include "sourcehandling.h"
+#include "platform.h"
 
 #include <obs-module.h>
 
@@ -22,14 +23,6 @@ const char* kDeviceIdString = "device_id";
 
 //------------------------------------------------------------------------
 // https://github.com/obsproject/obs-studio/blob/master/libobs/obs-audio.c#L52
-#if defined(_WIN32)
-const char* kAudioInputCaptureSourceId = "wasapi_input_capture";
-#elif __APPLE__
-const char* kAudioInputCaptureSourceId = "coreaudio_input_capture";
-#elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
-const char* kAudioInputCaptureSourceId = "pulse_output_capture";
-#endif
-
 /**
     See also OBS source code
     UpdateAudioDevice(false, ui->desktopAudioDevice1, "Basic.DesktopDevice1", 1);
@@ -141,7 +134,7 @@ void createStreamChannelSource ()
 {
 	obs_data_t* settings = createSourceSettings ();
 	obs_source_t* source =
-	    obs_source_create (kAudioInputCaptureSourceId, kSourceName, settings, nullptr);
+	    obs_source_create (findAudioInputCaptureSourceId (), kSourceName, settings, nullptr);
 	obs_data_release (settings);
 	if (source == nullptr)
 		return;

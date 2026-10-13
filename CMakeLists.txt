@@ -60,6 +60,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     src/mixkeywidget.h
     src/mixkeyipc.cpp
     src/mixkeyipc.h
+    src/platform.h
     src/sourcehandling.cpp
     src/sourcehandling.h
     resources.qrc
@@ -68,17 +69,17 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_sources (${CMAKE_PROJECT_NAME}
         PRIVATE
-            src/sourcehandling_win.cpp
+            src/platform_win.cpp
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_sources (${CMAKE_PROJECT_NAME}
         PRIVATE
-            src/sourcehandling_mac.cpp
+            src/platform_mac.cpp
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_sources (${CMAKE_PROJECT_NAME}
         PRIVATE
-            src/sourcehandling_linux.cpp
+            src/platform_linux.cpp
     )
 endif()
 
