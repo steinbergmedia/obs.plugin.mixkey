@@ -42,8 +42,8 @@ static void startMixKeyApp ()
 {
 #if defined(_WIN32)
 	const QSettings settings (
-		"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\MixKey.exe",
-		QSettings::NativeFormat);
+	    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\MixKey.exe",
+	    QSettings::NativeFormat);
 	const QString location = settings.value ("Path").toString ();
 	QProcess::startDetached (location);
 #elif __APPLE__
@@ -56,7 +56,7 @@ static void startMixKeyApp ()
 //------------------------------------------------------------------------
 static void repairMixKeyConnection ()
 {
-	removeBrokenStreamChannelCandidates ();
+	removeBrokenStreamChannels ();
 	createStreamChannelSource ();
 }
 
@@ -84,11 +84,11 @@ static void addIcon (const QString& iconPath, QPushButton* button)
 }
 
 //------------------------------------------------------------------------
-static QPushButton* createButton (const char* textId, const QString& /*iconPath*/,
+static QPushButton* createButton (const QString& textId, const QString& /*iconPath*/,
                                   const QString& objectName)
 {
 	QPushButton* button = new QPushButton ();
-	button->setText (QString::fromUtf8 (obs_module_text (textId)));
+	button->setText (QString::fromUtf8 (obs_module_text (textId.toStdString ().c_str ())));
 	button->setObjectName (objectName);
 
 	// addIcon (iconPath, button);
@@ -137,6 +137,7 @@ static void onSourceCreate (void* param, calldata_t* cd)
 
 	context->source = source;
 	context->addBut->setDisabled (true);
+	context->repairBut->setEnabled (true);
 }
 
 //------------------------------------------------------------------------
@@ -167,6 +168,7 @@ static void onSourceDestroy (void* param, calldata_t* cd)
 
 	context->source = nullptr;
 	context->addBut->setEnabled (true);
+	context->repairBut->setDisabled (true);
 }
 
 //------------------------------------------------------------------------
@@ -235,6 +237,7 @@ void* createDocWidget ()
 	    createButton ("MixKey.RepairButton", ":/mixkey/images/repair.svg", "repairbutton");
 	QPushButton::connect (context.repairBut, &QPushButton::pressed,
 	                      [] () { repairMixKeyConnection (); });
+	context.repairBut->setDisabled (true);
 
 	QPointer<QPushButton> startBut = context.startBut;
 	QLabel* status = createStatus ();

@@ -24,7 +24,7 @@ enum SetupStatus
 bool streamChannelSourceExists ();
 void createStreamChannelSource ();
 bool isStreamChannelSource (obs_source_t* source);
-void removeBrokenStreamChannelCandidates ();
+void removeBrokenStreamChannels ();
 
 SetupStatus getCurrentSetupState ();
 
