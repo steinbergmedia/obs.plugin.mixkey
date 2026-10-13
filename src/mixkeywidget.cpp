@@ -9,7 +9,6 @@
 
 #include "mixkeyipc.h"
 #include "sourcehandling.h"
-#include "plugin-support.h"
 
 #include <QBoxLayout>
 #include <QLabel>
@@ -19,9 +18,11 @@
 #include <QSettings>
 #include <QWidget>
 
+#include "obs-frontend-api.h"
 #include "obs.h"
 #include <obs-module.h>
 
+#include "plugin-support.h"
 namespace MixKey {
 
 //------------------------------------------------------------------------
@@ -192,6 +193,19 @@ static void onSourceRename (void* /*param*/, calldata_t* cd)
 }
 
 //------------------------------------------------------------------------
+static void onFrontendEvent (obs_frontend_event event, void* param)
+{
+	if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING)
+	{
+		auto* context = static_cast<Context*> (param);
+		if (!context)
+			return;
+
+		blog (LOG_INFO, "[MixKey] OBS Frontend finished loading");
+	}
+}
+
+//------------------------------------------------------------------------
 static void connectSourceCallbacks (Context& context)
 {
 	signal_handler_t* handler = obs_get_signal_handler ();
@@ -227,7 +241,7 @@ void* createDocWidget ()
 {
 	QWidget* dock = new QWidget ();
 	QVBoxLayout* layout = createBoxLayout (dock);
-
+	obs_frontend_add_event_callback (onFrontendEvent, &context);
 	context.client = new Client (dock);
 
 	context.addBut = createButton ("MixKey.AddButtonText", ":/mixkey/images/add.svg", "addbutton");
@@ -281,7 +295,7 @@ void* createDocWidget ()
 void destroyDocWidget ()
 {
 	disconnectSourceCallbacks (context);
-
+	obs_frontend_remove_event_callback (onFrontendEvent, &context);
 	context.client->onConnectionStateChanged = nullptr;
 }
 
