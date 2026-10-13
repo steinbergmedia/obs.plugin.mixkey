@@ -188,7 +188,8 @@ static std::string findPort ()
 //------------------------------------------------------------------------
 std::string findStreamDeviceId ()
 {
-	return findPort ();
+	static const std::string kStreamDeviceId = findPort ();
+	return kStreamDeviceId;
 }
 
 //------------------------------------------------------------------------
