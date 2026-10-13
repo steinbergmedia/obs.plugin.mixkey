@@ -12,10 +12,12 @@
 
 #include <string_view>
 
+extern const char *PLUGIN_NAME;
+
 namespace MixKey {
 
 //------------------------------------------------------------------------
-const char* kSourceName = "MixKey";
+const char* kSourceName = PLUGIN_NAME;
 const char* kDeviceIdString = "device_id";
 
 //------------------------------------------------------------------------

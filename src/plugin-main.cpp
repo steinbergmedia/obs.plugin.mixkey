@@ -19,6 +19,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-module.h>
 #include <plugin-support.h>
 #include "mixkeywidget.h"
+#include <string>
 
 #include <QWidget>
 
@@ -31,8 +32,11 @@ bool obs_module_load(void)
 {
 	blog (LOG_INFO, "[MixKey] Plugin loaded successfully (version %s)", PLUGIN_VERSION);
 
+	const std::string kMixKeyDockTitle = std::string(PLUGIN_NAME) + " Setup";
+	static const char* kMixKeyDockId = "MK2347865342876432";
+	
 	void* dock = MixKey::createDocWidget ();
-	obs_frontend_add_dock_by_id ("MK2347865342876432", "MixKey Setup", dock);
+	obs_frontend_add_dock_by_id (kMixKeyDockId, kMixKeyDockTitle.c_str (), dock);
 
 	return true;
 }

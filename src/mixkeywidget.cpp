@@ -21,7 +21,12 @@
 #include "obs.h"
 #include <obs-module.h>
 
+extern const char* PLUGIN_NAME;
+
 namespace MixKey {
+
+//------------------------------------------------------------------------
+static const char* kMixKeyAppName = PLUGIN_NAME;
 
 //------------------------------------------------------------------------
 struct Context
@@ -47,9 +52,9 @@ static void startMixKeyApp ()
 	const QString location = settings.value ("Path").toString ();
 	QProcess::startDetached (location);
 #elif __APPLE__
-	QProcess::startDetached ("open", {"-a", "MixKey_debug"});
+	QProcess::startDetached ("open", {"-a", kMixKeyAppName});
 #elif (defined(__gnu_linux__) && __gnu_linux__) || (defined(__linux__) && __linux__)
-	QProcess::startDetached ("open", {"MixKey"});
+	QProcess::startDetached ("open", {kMixKeyAppName});
 #endif
 }
 
