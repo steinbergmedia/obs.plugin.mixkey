@@ -36,7 +36,7 @@
             "bundleId": "com.steinberg.obs.plugin.mixkey"
         }
     },
-    "name": "mixkey",
+    "name": "MixKey",
     "displayName": "MixKey for OBS",
     "version": "1.0.0",
     "author": "Steinberg",
