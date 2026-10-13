@@ -9,6 +9,7 @@
 
 #include "mixkeyipc.h"
 #include "sourcehandling.h"
+#include "plugin-support.h"
 
 #include <QBoxLayout>
 #include <QLabel>
@@ -20,8 +21,6 @@
 
 #include "obs.h"
 #include <obs-module.h>
-
-extern const char* PLUGIN_NAME;
 
 namespace MixKey {
 

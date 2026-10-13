@@ -8,12 +8,11 @@
 
 #include "sourcehandling.h"
 #include "platform.h"
+#include "plugin-support.h"
 
 #include <obs-module.h>
 
 #include <string_view>
-
-extern const char *PLUGIN_NAME;
 
 namespace MixKey {
 
