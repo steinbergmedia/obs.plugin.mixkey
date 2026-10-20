@@ -19,6 +19,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-module.h>
 #include <plugin-support.h>
 #include "mixkeywidget.h"
+#include "version.h"
 #include <string>
 
 #include <QWidget>
@@ -46,4 +47,13 @@ void obs_module_unload(void)
 	MixKey::destroyDocWidget ();
 	
 	blog (LOG_INFO, "[MixKey] Plugin unloaded");
+}
+
+MODULE_EXPORT const char *obs_module_name(void)
+{
+	static const std::string name {PLUGIN_NAME};
+	static const std::string vers {PLUGIN_VERSION};
+	static const std::string concat = name + " (" + vers + ")";
+	
+	return concat.c_str ();
 }

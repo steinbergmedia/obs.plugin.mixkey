@@ -63,6 +63,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     src/platform.h
     src/sourcehandling.cpp
     src/sourcehandling.h
+    src/version.h
+	src/build_tag.h
     resources.qrc
 )
 
