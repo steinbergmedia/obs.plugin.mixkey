@@ -33,8 +33,8 @@ bool obs_module_load(void)
 {
 	blog (LOG_INFO, "[MixKey] Plugin loaded successfully (version %s)", PLUGIN_VERSION);
 
-	const std::string kMixKeyDockTitle = std::string(PLUGIN_NAME) + " Setup";
-	static const char* kMixKeyDockId = "MK2347865342876432";
+	static const std::string kMixKeyDockTitle = std::string(PLUGIN_NAME) + " Setup";
+	static const char* kMixKeyDockId = "8B9019FE-1225-4D12-9BA8-91F2FC9FFB6C";
 	
 	void* dock = MixKey::createDocWidget ();
 	obs_frontend_add_dock_by_id (kMixKeyDockId, kMixKeyDockTitle.c_str (), dock);
