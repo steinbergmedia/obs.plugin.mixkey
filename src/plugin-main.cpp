@@ -57,7 +57,7 @@ void frontendCallback (obs_frontend_event event, void *)
 	if (!mainWindow)
 		return;
 
-	QMetaObject::invokeMethod (mainWindow, [mainWindow] {		
+	QMetaObject::invokeMethod (mainWindow, [mainWindow] {
 		// show window if needed
 		auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
 		if (dock && !dock->isVisible ())
@@ -76,7 +76,7 @@ bool obs_module_load (void)
 	if (!dock)
 		return false;
 
-	static const QString kMixKeyDockTitle = QString (PLUGIN_NAME) + " Setup";
+	static const QString kMixKeyDockTitle = QString::fromUtf8 (obs_module_text ("MixKey.SetupText"));
 		
 	if (!obs_frontend_add_dock_by_id (kMKDockId, kMixKeyDockTitle.toUtf8 (), dock))
 	{
