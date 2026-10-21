@@ -16,44 +16,97 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <obs-module.h>
+//------------------------------------------------------------------------
 #include <plugin-support.h>
+#include <obs-module.h>
+#include <obs-frontend-api.h>
+#include <util/config-file.h>
+
+//------------------------------------------------------------------------
 #include "mixkeywidget.h"
 #include "version.h"
-#include <string>
 
+//------------------------------------------------------------------------
 #include <QWidget>
+#include <QDockWidget>
 
-#include <obs-frontend-api.h>
+//------------------------------------------------------------------------
+#define kMKDockId "8B9019FE-1225-4D12-9BA8-91F2FC9FFB6C"
+#define kMKFirstShown "MKFirstShown"
 
+//------------------------------------------------------------------------
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
-bool obs_module_load(void)
+//------------------------------------------------------------------------
+void frontendCallback (obs_frontend_event event, void *)
 {
-	blog (LOG_INFO, "[MixKey] Plugin loaded successfully (version %s)", PLUGIN_VERSION);
+	if (event != OBS_FRONTEND_EVENT_FINISHED_LOADING)
+		return;
 
-	static const std::string kMixKeyDockTitle = std::string(PLUGIN_NAME) + " Setup";
-	static const char* kMixKeyDockId = "8B9019FE-1225-4D12-9BA8-91F2FC9FFB6C";
+	// remove callback
+	obs_frontend_remove_event_callback (frontendCallback, nullptr);
+
+	// save info that it was shown
+	config_t* config = obs_frontend_get_user_config ();
+	if (config)
+		config_set_bool (config, PLUGIN_NAME, kMKFirstShown, true);
+
+	// main window
+	QWidget* mainWindow = static_cast<QWidget*> (obs_frontend_get_main_window ());
+	if (!mainWindow)
+		return;
+
+	QMetaObject::invokeMethod (mainWindow, [mainWindow] {		
+		// show window if needed
+		auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
+		if (dock && !dock->isVisible ())
+		{
+			QAction* action = dock->toggleViewAction ();
+			if (action)
+				action->trigger ();
+		}
+	}, Qt::QueuedConnection);
+}
+
+//------------------------------------------------------------------------
+bool obs_module_load (void)
+{
+	QWidget* dock = MixKey::createDocWidget ();
+	if (!dock)
+		return false;
+
+	static const QString kMixKeyDockTitle = QString (PLUGIN_NAME) + " Setup";
+		
+	if (!obs_frontend_add_dock_by_id (kMKDockId, kMixKeyDockTitle.toUtf8 (), dock))
+	{
+		MixKey::destroyDocWidget ();
+		delete dock;
+		return false;
+	}
+
+	bool addFirstShow = true;
+	config_t* config = obs_frontend_get_user_config ();
+	if (config)
+		addFirstShow = !config_get_bool (config, PLUGIN_NAME, kMKFirstShown);
+	if (addFirstShow)
+		obs_frontend_add_event_callback (frontendCallback, nullptr);
 	
-	void* dock = MixKey::createDocWidget ();
-	obs_frontend_add_dock_by_id (kMixKeyDockId, kMixKeyDockTitle.c_str (), dock);
+	blog (LOG_INFO, "[MixKey] Plugin loaded successfully (version %s)", PLUGIN_VERSION);
 
 	return true;
 }
 
-void obs_module_unload(void)
+//------------------------------------------------------------------------
+void obs_module_unload (void)
 {
 	MixKey::destroyDocWidget ();
 	
 	blog (LOG_INFO, "[MixKey] Plugin unloaded");
 }
 
-MODULE_EXPORT const char *obs_module_name(void)
+//------------------------------------------------------------------------
+MODULE_EXPORT const char* obs_module_name(void)
 {
-	static const std::string name {PLUGIN_NAME};
-	static const std::string vers {PLUGIN_VERSION};
-	static const std::string concat = name + " (" + vers + ")";
-	
-	return concat.c_str ();
+	return PLUGIN_NAME " (" PLUGIN_VERSION ")";
 }

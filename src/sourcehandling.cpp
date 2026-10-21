@@ -6,9 +6,10 @@
 // Description : <Description>
 //------------------------------------------------------------------------
 
-#include "sourcehandling.h"
 #include "platform.h"
 #include "plugin-support.h"
+#include "sourcehandling.h"
+#include "version.h"
 
 #include <obs-module.h>
 

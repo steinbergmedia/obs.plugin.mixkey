@@ -13,6 +13,7 @@
 #define BUILD_NUMBER_STR TAG_BUILDNR_STR
 
 #define PLUGIN_VERSION MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR "." BUILD_NUMBER_STR
+#define PLUGIN_NAME "MixKey"
 
 #define stringFileDescription	"MixKey OBS Plugin"
 #define stringEffectName		stringFileDescription

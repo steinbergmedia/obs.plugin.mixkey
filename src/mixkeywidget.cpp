@@ -10,6 +10,8 @@
 #include "mixkeyipc.h"
 #include "sourcehandling.h"
 
+#include "version.h"
+
 #include <QBoxLayout>
 #include <QLabel>
 #include <QPointer>
@@ -23,6 +25,7 @@
 #include <obs-module.h>
 
 #include "plugin-support.h"
+
 namespace MixKey {
 
 //------------------------------------------------------------------------
@@ -237,7 +240,7 @@ static void disconnectSourceCallbacks (Context& context)
 }
 
 //------------------------------------------------------------------------
-void* createDocWidget ()
+QWidget* createDocWidget ()
 {
 	QWidget* dock = new QWidget ();
 	QVBoxLayout* layout = createBoxLayout (dock);
@@ -288,7 +291,7 @@ void* createDocWidget ()
 
 	connectSourceCallbacks (context);
 
-	return (void*)dock;
+	return dock;
 }
 
 //------------------------------------------------------------------------

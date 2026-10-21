@@ -8,10 +8,12 @@
 
 #pragma once
 
+#include <QWidget>
+
 namespace MixKey {
 
 //------------------------------------------------------------------------
-void* createDocWidget ();
+QWidget* createDocWidget ();
 void destroyDocWidget ();
 //------------------------------------------------------------------------
 } // namespace MixKey

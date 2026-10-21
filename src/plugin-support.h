@@ -27,8 +27,6 @@ extern "C" {
 #include <stdarg.h>
 #include <string.h>
 
-extern const char *PLUGIN_NAME;
-
 void obs_log(int log_level, const char *format, ...);
 extern void blogva(int log_level, const char *format, va_list args);
 
