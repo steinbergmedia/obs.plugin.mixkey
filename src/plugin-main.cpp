@@ -17,7 +17,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 //------------------------------------------------------------------------
-#include <plugin-support.h>
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 #include <util/config-file.h>
