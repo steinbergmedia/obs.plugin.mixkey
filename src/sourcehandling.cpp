@@ -7,7 +7,6 @@
 //------------------------------------------------------------------------
 
 #include "platform.h"
-#include "plugin-support.h"
 #include "sourcehandling.h"
 #include "version.h"
 

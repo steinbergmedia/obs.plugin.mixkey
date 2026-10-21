@@ -24,7 +24,6 @@
 #include "obs.h"
 #include <obs-module.h>
 
-#include "plugin-support.h"
 
 namespace MixKey {
 
