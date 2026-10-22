@@ -77,28 +77,12 @@ static void addSource ()
 }
 
 //------------------------------------------------------------------------
-static void addIcon (const QString& iconPath, QPushButton* button)
-{
-	if (iconPath.isEmpty () || button == nullptr)
-		return;
-
-	static const QSize kIconSize = QSize (10, 10);
-
-	QIcon icon;
-	icon.addFile (iconPath, kIconSize);
-	button->setIcon (icon);
-	button->setIconSize (kIconSize);
-}
-
-//------------------------------------------------------------------------
 static QPushButton* createButton (const QString& textId, const QString& /*iconPath*/,
                                   const QString& objectName)
 {
 	QPushButton* button = new QPushButton ();
 	button->setText (QString::fromUtf8 (obs_module_text (textId.toStdString ().c_str ())));
 	button->setObjectName (objectName);
-
-	// addIcon (iconPath, button);
 
 	return button;
 }
