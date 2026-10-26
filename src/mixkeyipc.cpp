@@ -6,17 +6,47 @@
 // Description : <Description>
 //------------------------------------------------------------------------
 
+//------------------------------------------------------------------------
+#include <obs-frontend-api.h>
+#include <obs-module.h>
+#include <util/config-file.h>
+
 #include "mixkeyipc.h"
 #include "sourcehandling.h"
 
+//------------------------------------------------------------------------
+#include <QDockWidget>
 #include <QTimer>
+#include <QWidget>
 
 namespace MixKey {
 
 //------------------------------------------------------------------------
 #define kMixKeyOBSIpcId "MixKeyOBSIpc"
+#define kMKDockId "8B9019FE-1225-4D12-9BA8-91F2FC9FFB6C"
+
 constexpr int32_t kReconnectInterval = 2000;
 constexpr int32_t kMaxMessageLength = 10;
+
+static void showDock ()
+{
+	QWidget* mainWindow = static_cast<QWidget*> (obs_frontend_get_main_window ());
+	if (!mainWindow)
+		return;
+
+	QMetaObject::invokeMethod (mainWindow,
+	                           [mainWindow] {
+		                           // show window if needed
+		                           auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
+		                           if (dock && !dock->isVisible ())
+		                           {
+			                           QAction* action = dock->toggleViewAction ();
+			                           if (action)
+				                           action->trigger ();
+		                           }
+	                           },
+	                           Qt::QueuedConnection);
+}
 
 //------------------------------------------------------------------------
 // Client
@@ -66,25 +96,24 @@ void Client::initSocket ()
 	connect (socket, &QLocalSocket::readyRead, this, [this] () {
 		QString msg = QString::fromUtf8 (socket->readAll ());
 
-		QStringList parts = msg.split ("|");
-		if (parts.size () == 2)
+		if (msg == QString ("status"))
 		{
-			QString msgContent = parts.last ();
-
-			if (msgContent == QString ("status"))
+			if (getCurrentSetupState () == kOk)
 			{
-				if (getCurrentSetupState () == kOk)
-				{
-					socket->write ("ok", kMaxMessageLength);
-					socket->flush ();
-				}
-				else
-				{
-					socket->write ("notok", kMaxMessageLength);
-					socket->flush ();
-				}
+				socket->write ("ok", kMaxMessageLength);
+				socket->flush ();
+			}
+			else
+			{
+				socket->write ("notok", kMaxMessageLength);
+				socket->flush ();
 			}
 		}
+		else if (msg == QString ("showdock"))
+		{
+			showDock ();
+		}
+
 	});
 }
 

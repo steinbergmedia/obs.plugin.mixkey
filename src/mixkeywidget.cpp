@@ -24,7 +24,6 @@
 #include "obs.h"
 #include <obs-module.h>
 
-
 namespace MixKey {
 
 //------------------------------------------------------------------------
@@ -85,18 +84,6 @@ static QPushButton* createButton (const QString& textId, const QString& /*iconPa
 	button->setObjectName (objectName);
 
 	return button;
-}
-
-//------------------------------------------------------------------------
-static QLabel* createStatus ()
-{
-	QLabel* status = new QLabel ();
-	status->setText ("Offline");
-	status->setAlignment (Qt::AlignCenter);
-	status->setStyleSheet ("color: red;");
-	status->setFixedHeight (38);
-
-	return status;
 }
 
 //------------------------------------------------------------------------
@@ -244,22 +231,17 @@ QWidget* createDocWidget ()
 	context.repairBut->setDisabled (true);
 
 	QPointer<QPushButton> startBut = context.startBut;
-	QLabel* status = createStatus ();
-	context.client->onConnectionStateChanged = [status, startBut] (const Client::State state) {
+	context.client->onConnectionStateChanged = [startBut] (const Client::State state) {
 		switch (state)
 		{
 			case Client::State::kConnected:
 			{
-				status->setStyleSheet ("color: green;");
-				status->setText ("Online");
 				if (startBut)
 					startBut->setDisabled (true);
 				break;
 			}
 			case Client::State::kDisconnected:
 			{
-				status->setStyleSheet ("color: red;");
-				status->setText ("Offline");
 				if (startBut)
 					startBut->setEnabled (true);
 				break;
@@ -267,7 +249,6 @@ QWidget* createDocWidget ()
 		}
 	};
 
-	layout->addWidget (status);
 	layout->addWidget (context.addBut);
 	layout->addWidget (context.startBut);
 	layout->addWidget (context.repairBut);
