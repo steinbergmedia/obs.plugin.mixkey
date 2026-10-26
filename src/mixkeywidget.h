@@ -8,7 +8,7 @@
 
 #pragma once
 
-class QWidget;
+#include <QWidget>
 
 namespace MixKey {
 
