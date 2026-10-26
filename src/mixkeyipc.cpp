@@ -6,15 +6,23 @@
 // Description : <Description>
 //------------------------------------------------------------------------
 
+//------------------------------------------------------------------------
 #include "mixkeyipc.h"
+#include "defines.h"
+
+#include "mixkeywidget.h"
 #include "sourcehandling.h"
 
+//------------------------------------------------------------------------
+#include <QDockWidget>
 #include <QTimer>
+#include <QWidget>
 
 namespace MixKey {
 
 //------------------------------------------------------------------------
 #define kMixKeyOBSIpcId "MixKeyOBSIpc"
+
 constexpr int32_t kReconnectInterval = 2000;
 constexpr int32_t kMaxMessageLength = 10;
 
@@ -66,25 +74,20 @@ void Client::initSocket ()
 	connect (socket, &QLocalSocket::readyRead, this, [this] () {
 		QString msg = QString::fromUtf8 (socket->readAll ());
 
-		QStringList parts = msg.split ("|");
-		if (parts.size () == 2)
+		if (msg == QString (kIPCMessageStatus))
 		{
-			QString msgContent = parts.last ();
+			if (getCurrentSetupState () == kOk)
+				socket->write (kIPCMessageStatusOk, kMaxMessageLength);
+			else
+				socket->write (kIPCMessageStatusNotOk, kMaxMessageLength);
 
-			if (msgContent == QString ("status"))
-			{
-				if (getCurrentSetupState () == kOk)
-				{
-					socket->write ("ok", kMaxMessageLength);
-					socket->flush ();
-				}
-				else
-				{
-					socket->write ("notok", kMaxMessageLength);
-					socket->flush ();
-				}
-			}
+			socket->flush ();
 		}
+		else if (msg == QString (kIPCMessageShowDock))
+		{
+			showDockWidget ();
+		}
+
 	});
 }
 

@@ -24,13 +24,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 //------------------------------------------------------------------------
 #include "mixkeywidget.h"
 #include "version.h"
+#include "defines.h"
 
 //------------------------------------------------------------------------
 #include <QWidget>
 #include <QDockWidget>
 
 //------------------------------------------------------------------------
-#define kMKDockId "8B9019FE-1225-4D12-9BA8-91F2FC9FFB6C"
 #define kMKFirstShown "MKFirstShown"
 
 //------------------------------------------------------------------------
@@ -51,27 +51,13 @@ void frontendCallback (obs_frontend_event event, void *)
 	if (config)
 		config_set_bool (config, PLUGIN_NAME, kMKFirstShown, true);
 
-	// main window
-	QWidget* mainWindow = static_cast<QWidget*> (obs_frontend_get_main_window ());
-	if (!mainWindow)
-		return;
-
-	QMetaObject::invokeMethod (mainWindow, [mainWindow] {
-		// show window if needed
-		auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
-		if (dock && !dock->isVisible ())
-		{
-			QAction* action = dock->toggleViewAction ();
-			if (action)
-				action->trigger ();
-		}
-	}, Qt::QueuedConnection);
+	MixKey::showDockWidget ();
 }
 
 //------------------------------------------------------------------------
 bool obs_module_load (void)
 {
-	QWidget* dock = MixKey::createDocWidget ();
+	QWidget* dock = MixKey::createDockWidget ();
 	if (!dock)
 		return false;
 
@@ -79,7 +65,7 @@ bool obs_module_load (void)
 		
 	if (!obs_frontend_add_dock_by_id (kMKDockId, kMixKeyDockTitle.toUtf8 (), dock))
 	{
-		MixKey::destroyDocWidget ();
+		MixKey::destroyDockWidget ();
 		delete dock;
 		return false;
 	}
@@ -99,7 +85,7 @@ bool obs_module_load (void)
 //------------------------------------------------------------------------
 void obs_module_unload (void)
 {
-	MixKey::destroyDocWidget ();
+	MixKey::destroyDockWidget ();
 	
 	blog (LOG_INFO, "[MixKey] Plugin unloaded");
 }

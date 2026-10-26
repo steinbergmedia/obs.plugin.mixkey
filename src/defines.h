@@ -1,0 +1,8 @@
+#define kMKDockId "8B9019FE-1225-4D12-9BA8-91F2FC9FFB6C"
+
+
+#define kIPCMessageStatus "status"
+#define kIPCMessageStatusOk "statusOk"
+#define kIPCMessageStatusNotOk "statusNotOk"
+
+#define kIPCMessageShowDock "showDock"

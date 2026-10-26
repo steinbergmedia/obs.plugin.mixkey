@@ -10,9 +10,11 @@
 #include "mixkeyipc.h"
 #include "sourcehandling.h"
 
+#include "defines.h"
 #include "version.h"
 
 #include <QBoxLayout>
+#include <QDockWidget>
 #include <QLabel>
 #include <QPointer>
 #include <QProcess>
@@ -23,7 +25,6 @@
 #include "obs-frontend-api.h"
 #include "obs.h"
 #include <obs-module.h>
-
 
 namespace MixKey {
 
@@ -85,18 +86,6 @@ static QPushButton* createButton (const QString& textId, const QString& /*iconPa
 	button->setObjectName (objectName);
 
 	return button;
-}
-
-//------------------------------------------------------------------------
-static QLabel* createStatus ()
-{
-	QLabel* status = new QLabel ();
-	status->setText ("Offline");
-	status->setAlignment (Qt::AlignCenter);
-	status->setStyleSheet ("color: red;");
-	status->setFixedHeight (38);
-
-	return status;
 }
 
 //------------------------------------------------------------------------
@@ -223,7 +212,7 @@ static void disconnectSourceCallbacks (Context& context)
 }
 
 //------------------------------------------------------------------------
-QWidget* createDocWidget ()
+QWidget* createDockWidget ()
 {
 	QWidget* dock = new QWidget ();
 	QVBoxLayout* layout = createBoxLayout (dock);
@@ -244,22 +233,17 @@ QWidget* createDocWidget ()
 	context.repairBut->setDisabled (true);
 
 	QPointer<QPushButton> startBut = context.startBut;
-	QLabel* status = createStatus ();
-	context.client->onConnectionStateChanged = [status, startBut] (const Client::State state) {
+	context.client->onConnectionStateChanged = [startBut] (const Client::State state) {
 		switch (state)
 		{
 			case Client::State::kConnected:
 			{
-				status->setStyleSheet ("color: green;");
-				status->setText ("Online");
 				if (startBut)
 					startBut->setDisabled (true);
 				break;
 			}
 			case Client::State::kDisconnected:
 			{
-				status->setStyleSheet ("color: red;");
-				status->setText ("Offline");
 				if (startBut)
 					startBut->setEnabled (true);
 				break;
@@ -267,7 +251,6 @@ QWidget* createDocWidget ()
 		}
 	};
 
-	layout->addWidget (status);
 	layout->addWidget (context.addBut);
 	layout->addWidget (context.startBut);
 	layout->addWidget (context.repairBut);
@@ -278,11 +261,32 @@ QWidget* createDocWidget ()
 }
 
 //------------------------------------------------------------------------
-void destroyDocWidget ()
+void destroyDockWidget ()
 {
 	disconnectSourceCallbacks (context);
 	obs_frontend_remove_event_callback (onFrontendEvent, &context);
 	context.client->onConnectionStateChanged = nullptr;
+}
+
+//------------------------------------------------------------------------
+void showDockWidget ()
+{
+	QWidget* mainWindow = static_cast<QWidget*> (obs_frontend_get_main_window ());
+	if (!mainWindow)
+		return;
+
+	QMetaObject::invokeMethod (mainWindow,
+	                           [mainWindow] {
+		                           // show window if needed
+		                           auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
+		                           if (dock && !dock->isVisible ())
+		                           {
+			                           QAction* action = dock->toggleViewAction ();
+			                           if (action)
+				                           action->trigger ();
+		                           }
+	                           },
+	                           Qt::QueuedConnection);
 }
 
 //------------------------------------------------------------------------

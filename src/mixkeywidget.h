@@ -13,7 +13,8 @@
 namespace MixKey {
 
 //------------------------------------------------------------------------
-QWidget* createDocWidget ();
-void destroyDocWidget ();
+QWidget* createDockWidget ();
+void destroyDockWidget ();
+void showDockWidget ();
 //------------------------------------------------------------------------
 } // namespace MixKey
