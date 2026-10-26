@@ -8,6 +8,7 @@
 
 //------------------------------------------------------------------------
 #include "mixkeyipc.h"
+#include "defines.h"
 
 #include "mixkeywidget.h"
 #include "sourcehandling.h"
@@ -73,20 +74,16 @@ void Client::initSocket ()
 	connect (socket, &QLocalSocket::readyRead, this, [this] () {
 		QString msg = QString::fromUtf8 (socket->readAll ());
 
-		if (msg == QString ("status"))
+		if (msg == QString (kIPCMessageStatus))
 		{
 			if (getCurrentSetupState () == kOk)
-			{
-				socket->write ("ok", kMaxMessageLength);
-				socket->flush ();
-			}
+				socket->write (kIPCMessageStatusOk, kMaxMessageLength);
 			else
-			{
-				socket->write ("notok", kMaxMessageLength);
-				socket->flush ();
-			}
+				socket->write (kIPCMessageStatusNotOk, kMaxMessageLength);
+
+			socket->flush ();
 		}
-		else if (msg == QString ("showdock"))
+		else if (msg == QString (kIPCMessageShowDock))
 		{
 			showDockWidget ();
 		}
