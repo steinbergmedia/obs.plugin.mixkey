@@ -51,21 +51,7 @@ void frontendCallback (obs_frontend_event event, void *)
 	if (config)
 		config_set_bool (config, PLUGIN_NAME, kMKFirstShown, true);
 
-	// main window
-	QWidget* mainWindow = static_cast<QWidget*> (obs_frontend_get_main_window ());
-	if (!mainWindow)
-		return;
-
-	QMetaObject::invokeMethod (mainWindow, [mainWindow] {
-		// show window if needed
-		auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
-		if (dock && !dock->isVisible ())
-		{
-			QAction* action = dock->toggleViewAction ();
-			if (action)
-				action->trigger ();
-		}
-	}, Qt::QueuedConnection);
+	MixKey::showDockWidget ();
 }
 
 //------------------------------------------------------------------------
