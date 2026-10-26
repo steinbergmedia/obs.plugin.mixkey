@@ -10,9 +10,11 @@
 #include "mixkeyipc.h"
 #include "sourcehandling.h"
 
+#include "defines.h"
 #include "version.h"
 
 #include <QBoxLayout>
+#include <QDockWidget>
 #include <QLabel>
 #include <QPointer>
 #include <QProcess>
@@ -210,7 +212,7 @@ static void disconnectSourceCallbacks (Context& context)
 }
 
 //------------------------------------------------------------------------
-QWidget* createDocWidget ()
+QWidget* createDockWidget ()
 {
 	QWidget* dock = new QWidget ();
 	QVBoxLayout* layout = createBoxLayout (dock);
@@ -259,11 +261,32 @@ QWidget* createDocWidget ()
 }
 
 //------------------------------------------------------------------------
-void destroyDocWidget ()
+void destroyDockWidget ()
 {
 	disconnectSourceCallbacks (context);
 	obs_frontend_remove_event_callback (onFrontendEvent, &context);
 	context.client->onConnectionStateChanged = nullptr;
+}
+
+//------------------------------------------------------------------------
+void showDockWidget ()
+{
+	QWidget* mainWindow = static_cast<QWidget*> (obs_frontend_get_main_window ());
+	if (!mainWindow)
+		return;
+
+	QMetaObject::invokeMethod (mainWindow,
+	                           [mainWindow] {
+		                           // show window if needed
+		                           auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
+		                           if (dock && !dock->isVisible ())
+		                           {
+			                           QAction* action = dock->toggleViewAction ();
+			                           if (action)
+				                           action->trigger ();
+		                           }
+	                           },
+	                           Qt::QueuedConnection);
 }
 
 //------------------------------------------------------------------------

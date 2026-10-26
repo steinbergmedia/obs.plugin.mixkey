@@ -71,7 +71,7 @@ void frontendCallback (obs_frontend_event event, void *)
 //------------------------------------------------------------------------
 bool obs_module_load (void)
 {
-	QWidget* dock = MixKey::createDocWidget ();
+	QWidget* dock = MixKey::createDockWidget ();
 	if (!dock)
 		return false;
 
@@ -79,7 +79,7 @@ bool obs_module_load (void)
 		
 	if (!obs_frontend_add_dock_by_id (kMKDockId, kMixKeyDockTitle.toUtf8 (), dock))
 	{
-		MixKey::destroyDocWidget ();
+		MixKey::destroyDockWidget ();
 		delete dock;
 		return false;
 	}
@@ -99,7 +99,7 @@ bool obs_module_load (void)
 //------------------------------------------------------------------------
 void obs_module_unload (void)
 {
-	MixKey::destroyDocWidget ();
+	MixKey::destroyDockWidget ();
 	
 	blog (LOG_INFO, "[MixKey] Plugin unloaded");
 }

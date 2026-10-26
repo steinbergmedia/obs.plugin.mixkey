@@ -8,10 +8,11 @@
 
 //------------------------------------------------------------------------
 #include "mixkeyipc.h"
+
+#include "mixkeywidget.h"
 #include "sourcehandling.h"
 
 //------------------------------------------------------------------------
-#include "frontendutils.h"
 #include <QDockWidget>
 #include <QTimer>
 #include <QWidget>
@@ -87,7 +88,7 @@ void Client::initSocket ()
 		}
 		else if (msg == QString ("showdock"))
 		{
-			showDock ();
+			showDockWidget ();
 		}
 
 	});

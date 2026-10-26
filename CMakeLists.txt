@@ -58,8 +58,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 	  src/build_tag.h
     resources.qrc
     src/defines.h
-    src/frontendutils.cpp
-    src/frontendutils.h
     src/mixkeyipc.cpp
     src/mixkeyipc.h
     src/mixkeywidget.cpp
