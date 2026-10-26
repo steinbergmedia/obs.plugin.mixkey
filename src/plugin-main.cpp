@@ -24,13 +24,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 //------------------------------------------------------------------------
 #include "mixkeywidget.h"
 #include "version.h"
+#include "defines.h"
 
 //------------------------------------------------------------------------
 #include <QWidget>
 #include <QDockWidget>
 
 //------------------------------------------------------------------------
-#define kMKDockId "8B9019FE-1225-4D12-9BA8-91F2FC9FFB6C"
 #define kMKFirstShown "MKFirstShown"
 
 //------------------------------------------------------------------------

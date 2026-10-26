@@ -55,17 +55,20 @@ if(ENABLE_QT)
 endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE 
-    src/plugin-main.cpp
-    src/mixkeywidget.cpp
-    src/mixkeywidget.h
+	  src/build_tag.h
+    resources.qrc
+    src/defines.h
+    src/frontendutils.cpp
+    src/frontendutils.h
     src/mixkeyipc.cpp
     src/mixkeyipc.h
+    src/mixkeywidget.cpp
+    src/mixkeywidget.h
     src/platform.h
+    src/plugin-main.cpp
     src/sourcehandling.cpp
     src/sourcehandling.h
     src/version.h
-	src/build_tag.h
-    resources.qrc
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
