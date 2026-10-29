@@ -290,4 +290,23 @@ void showDockWidget ()
 }
 
 //------------------------------------------------------------------------
+void showMainWindow ()
+{
+	void* obsWindow = obs_frontend_get_main_window ();
+	QWidget* window = static_cast<QWidget*> (obsWindow);
+	if (!window)
+		return;
+
+	QMetaObject::invokeMethod (window, [window] ()
+	{
+		if (window->isMinimized ())
+			window->showNormal ();
+
+		window->raise ();
+		window->activateWindow ();
+
+	}, Qt::QueuedConnection);
+}
+
+//------------------------------------------------------------------------
 } // namespace MixKey

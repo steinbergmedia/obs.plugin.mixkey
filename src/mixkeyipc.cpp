@@ -84,10 +84,9 @@ void Client::initSocket ()
 			socket->flush ();
 		}
 		else if (msg == QString (kIPCMessageShowDock))
-		{
 			showDockWidget ();
-		}
-
+		else if (msg == QString (kIPCMessageRaiseMainWindow))
+			showMainWindow ();
 	});
 }
 
