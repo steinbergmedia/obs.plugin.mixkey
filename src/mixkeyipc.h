@@ -26,18 +26,20 @@ public:
 		kDisconnected,
 		kConnected
 	};
-	
+
 	using FnOnConnectionState = std::function<void (State)>;
+	void updateStatus ();
 
 	Client (QObject* object);
 	~Client () override;
 
 	FnOnConnectionState onConnectionStateChanged;
-	
+
 //------------------------------------------------------------------------
 protected:
 	void initSocket ();
 	void initConnectionTimer ();
+	void sendMessage (const QByteArray& data);
 
 	QLocalSocket* socket {nullptr};
 	QTimer* timer {nullptr};

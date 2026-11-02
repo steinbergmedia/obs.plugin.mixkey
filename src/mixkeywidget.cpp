@@ -118,11 +118,18 @@ static void onSourceCreate (void* param, calldata_t* cd)
 	context->source = source;
 	context->addBut->setDisabled (true);
 	context->repairBut->setEnabled (true);
+	context->client->updateStatus ();
 }
 
 //------------------------------------------------------------------------
-static void onSourceUpdate (void* /*param*/, calldata_t* cd)
+static void onSourceUpdate (void* param, calldata_t* cd)
 {
+	auto* context = static_cast<Context*> (param);
+	if (!context || !context->addBut)
+		return;
+
+	context->client->updateStatus ();
+
 	obs_source_t* source = static_cast<obs_source_t*> (calldata_ptr (cd, "source"));
 	if (!isStreamChannelSource (source))
 		return;
@@ -149,6 +156,7 @@ static void onSourceDestroy (void* param, calldata_t* cd)
 	context->source = nullptr;
 	context->addBut->setEnabled (true);
 	context->repairBut->setDisabled (true);
+	context->client->updateStatus ();
 }
 
 //------------------------------------------------------------------------

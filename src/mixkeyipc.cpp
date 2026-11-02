@@ -24,7 +24,7 @@ namespace MixKey {
 #define kMixKeyOBSIpcId "MixKeyOBSIpc"
 
 constexpr int32_t kReconnectInterval = 2000;
-constexpr int32_t kMaxMessageLength = 10;
+constexpr int32_t kMaxMessageLength = 30;
 
 //------------------------------------------------------------------------
 // Client
@@ -52,9 +52,6 @@ void Client::initSocket ()
 
 		if (onConnectionStateChanged)
 			onConnectionStateChanged (State::kConnected);
-
-		socket->write (QString ("Hey, OBS here!").toUtf8 ());
-		socket->flush ();
 	});
 
 	connect (socket, &QLocalSocket::disconnected, this, [this] () {
@@ -76,17 +73,20 @@ void Client::initSocket ()
 
 		if (msg == QString (kIPCMessageStatus))
 		{
-			if (getCurrentSetupState () == kOk)
-				socket->write (kIPCMessageStatusOk, kMaxMessageLength);
-			else
-				socket->write (kIPCMessageStatusNotOk, kMaxMessageLength);
-
-			socket->flush ();
+			updateStatus ();
 		}
 		else if (msg == QString (kIPCMessageShowDock))
 			showDockWidget ();
 		else if (msg == QString (kIPCMessageRaiseMainWindow))
 			showMainWindow ();
+		}
+		else if (msg == kIPCMessageRepair)
+		{
+			removeBrokenStreamChannels ();
+			createStreamChannelSource ();
+			QTimer::singleShot (1000, [this] () { updateStatus (); });
+		}
+
 	});
 }
 
@@ -103,6 +103,28 @@ void Client::initConnectionTimer ()
 	         });
 
 	timer->start ();
+}
+
+//------------------------------------------------------------------------
+void Client::updateStatus ()
+{
+	if (getCurrentSetupState () == kOk)
+		sendMessage (kIPCMessageStatusOk);
+	else
+		sendMessage (kIPCMessageStatusNotOk);
+}
+
+//------------------------------------------------------------------------
+void Client::sendMessage (const QByteArray& data)
+{
+	QMetaObject::invokeMethod (socket,
+	                           [this, data] () {
+		                           if (socket->state () == QLocalSocket::ConnectedState)
+		                           {
+			                           socket->write (data, kMaxMessageLength);
+		                           }
+	                           },
+	                           Qt::QueuedConnection);
 }
 
 //------------------------------------------------------------------------
