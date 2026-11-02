@@ -16,4 +16,5 @@
 #define kIPCMessageStatusOk "statusOk"
 #define kIPCMessageStatusNotOk "statusNotOk"
 #define kIPCMessageShowDock "showDock"
+#define kIPCMessageRepair "repair"
 #define kIPCMessageRaiseMainWindow "raiseMainWindow"
