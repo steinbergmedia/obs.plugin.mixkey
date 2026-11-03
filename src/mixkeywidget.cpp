@@ -5,14 +5,14 @@
 // Created by  : abruehl, 09/2026
 // Description : <Description>
 //------------------------------------------------------------------------
-#include "mixkeywidget.h"
-
-#include "mixkeyipc.h"
-#include "sourcehandling.h"
 
 #include "defines.h"
+#include "mixkeyipc.h"
+#include "mixkeywidget.h"
+#include "sourcehandling.h"
 #include "version.h"
 
+//------------------------------------------------------------------------
 #include <QBoxLayout>
 #include <QDockWidget>
 #include <QLabel>
@@ -22,10 +22,12 @@
 #include <QSettings>
 #include <QWidget>
 
-#include "obs-frontend-api.h"
-#include "obs.h"
+//------------------------------------------------------------------------
+#include <obs.h>
+#include <obs-frontend-api.h>
 #include <obs-module.h>
 
+//------------------------------------------------------------------------
 namespace MixKey {
 
 //------------------------------------------------------------------------
@@ -43,6 +45,7 @@ struct Context
 	QPointer<QPushButton> repairBut;
 };
 
+//------------------------------------------------------------------------
 static Context context;
 
 //------------------------------------------------------------------------
@@ -241,7 +244,8 @@ QWidget* createDockWidget ()
 	context.repairBut->setDisabled (true);
 
 	QPointer<QPushButton> startBut = context.startBut;
-	context.client->onConnectionStateChanged = [startBut] (const Client::State state) {
+	context.client->onConnectionStateChanged = [startBut] (const Client::State state)
+	{
 		switch (state)
 		{
 			case Client::State::kConnected:
@@ -250,6 +254,7 @@ QWidget* createDockWidget ()
 					startBut->setDisabled (true);
 				break;
 			}
+				
 			case Client::State::kDisconnected:
 			{
 				if (startBut)
@@ -277,42 +282,47 @@ void destroyDockWidget ()
 }
 
 //------------------------------------------------------------------------
+QWidget* getMainWindow ()
+{
+	void* obsWindow = obs_frontend_get_main_window ();
+	QWidget* window = static_cast<QWidget*> (obsWindow);
+	return window;
+}
+
+//------------------------------------------------------------------------
 void showDockWidget ()
 {
-	QWidget* mainWindow = static_cast<QWidget*> (obs_frontend_get_main_window ());
+	QWidget* mainWindow = getMainWindow ();
 	if (!mainWindow)
 		return;
 
-	QMetaObject::invokeMethod (mainWindow,
-	                           [mainWindow] {
-		                           // show window if needed
-		                           auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
-		                           if (dock && !dock->isVisible ())
-		                           {
-			                           QAction* action = dock->toggleViewAction ();
-			                           if (action)
-				                           action->trigger ();
-		                           }
-	                           },
-	                           Qt::QueuedConnection);
+	QMetaObject::invokeMethod (mainWindow, [mainWindow]
+	{
+		// show window if needed
+		auto* dock = mainWindow->findChild<QDockWidget*> (kMKDockId);
+		if (dock && !dock->isVisible ())
+		{
+			QAction* action = dock->toggleViewAction ();
+			if (action)
+				action->trigger ();
+		}
+	}, Qt::QueuedConnection);
 }
 
 //------------------------------------------------------------------------
 void showMainWindow ()
 {
-	void* obsWindow = obs_frontend_get_main_window ();
-	QWidget* window = static_cast<QWidget*> (obsWindow);
-	if (!window)
+	QWidget* mainWindow = getMainWindow ();
+	if (!mainWindow)
 		return;
 
-	QMetaObject::invokeMethod (window, [window] ()
+	QMetaObject::invokeMethod (mainWindow, [mainWindow] ()
 	{
-		if (window->isMinimized ())
-			window->showNormal ();
+		if (mainWindow->isMinimized ())
+			mainWindow->showNormal ();
 
-		window->raise ();
-		window->activateWindow ();
-
+		mainWindow->raise ();
+		mainWindow->activateWindow ();
 	}, Qt::QueuedConnection);
 }
 
