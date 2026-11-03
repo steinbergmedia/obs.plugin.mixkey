@@ -41,4 +41,6 @@ cmake --build ./build_x86_64
 
 ## Getting Help
 
+* https://docs.obsproject.com
+* https://obsproject.com/kb/plugins-guide
 * https://forums.steinberg.net/c/mixkey/170
