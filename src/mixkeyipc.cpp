@@ -79,7 +79,6 @@ void Client::initSocket ()
 			showDockWidget ();
 		else if (msg == QString (kIPCMessageRaiseMainWindow))
 			showMainWindow ();
-		}
 		else if (msg == kIPCMessageRepair)
 		{
 			removeBrokenStreamChannels ();
