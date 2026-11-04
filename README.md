@@ -4,7 +4,7 @@
 
 The plug-in is designed for use with the Steinberg MixKey desktop app (https://www.steinberg.net/mixkey).
 
-## Prerequistes
+## Prerequisites
 
 Install OBS!
 
