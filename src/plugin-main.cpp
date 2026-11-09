@@ -19,8 +19,8 @@
 #define kMKFirstShown "MKFirstShown"
 
 //------------------------------------------------------------------------
-OBS_DECLARE_MODULE()
-OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
+OBS_DECLARE_MODULE ()
+OBS_MODULE_USE_DEFAULT_LOCALE (PLUGIN_NAME, "en-US")
 
 //------------------------------------------------------------------------
 void frontendCallback (obs_frontend_event event, void*)
@@ -61,7 +61,7 @@ bool obs_module_load (void)
 		addFirstShow = !config_get_bool (config, PLUGIN_NAME, kMKFirstShown);
 	if (addFirstShow)
 		obs_frontend_add_event_callback (frontendCallback, nullptr);
-	
+
 	blog (LOG_INFO, "[MixKey] Plugin loaded successfully (version %s)", PLUGIN_VERSION);
 
 	return true;
@@ -71,12 +71,12 @@ bool obs_module_load (void)
 void obs_module_unload (void)
 {
 	MixKey::destroyDockWidget ();
-	
+
 	blog (LOG_INFO, "[MixKey] Plugin unloaded");
 }
 
 //------------------------------------------------------------------------
-MODULE_EXPORT const char* obs_module_name(void)
+MODULE_EXPORT const char* obs_module_name (void)
 {
 	return PLUGIN_NAME " (" PLUGIN_VERSION ")";
 }
