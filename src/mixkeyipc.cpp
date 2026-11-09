@@ -21,7 +21,6 @@ namespace MixKey {
 
 //------------------------------------------------------------------------
 constexpr int kReconnectInterval = 2000;
-constexpr int kMaxMessageLength = 30;
 
 //------------------------------------------------------------------------
 // Client
