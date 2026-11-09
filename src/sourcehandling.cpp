@@ -37,7 +37,6 @@ enum BasicAudioDevice
 	kAuxDevice2 = 4,
 	kAuxDevice3 = 5,
 	kAuxDevice4 = 6,
-
 };
 
 //------------------------------------------------------------------------

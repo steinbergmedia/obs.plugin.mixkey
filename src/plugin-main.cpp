@@ -23,7 +23,7 @@ OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 //------------------------------------------------------------------------
-void frontendCallback (obs_frontend_event event, void *)
+void frontendCallback (obs_frontend_event event, void*)
 {
 	if (event != OBS_FRONTEND_EVENT_FINISHED_LOADING)
 		return;
