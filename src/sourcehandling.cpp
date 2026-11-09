@@ -11,6 +11,7 @@
 #include "version.h"
 
 #include <obs-module.h>
+#include <obs.hpp>
 
 #include <string_view>
 
@@ -99,19 +100,16 @@ bool streamChannelSourceExists ()
 
 	for (int32_t i = kAuxDevice1; i <= kAuxDevice4; ++i)
 	{
-		obs_source_t* source = obs_get_output_source (i);
+		OBSSourceAutoRelease source (obs_get_output_source (i));
 		if (source == nullptr)
 			continue;
 
-		obs_data_t* settings = obs_source_get_settings (source);
+		OBSDataAutoRelease settings (obs_source_get_settings (source));
 		if (settings == nullptr)
 			continue;
 
 		const std::string_view deviceId = obs_data_get_string (settings, kDeviceIdString);
 		found = (deviceId == findStreamDeviceId ());
-
-		obs_data_release (settings);
-		obs_source_release (source);
 
 		if (found)
 			break;
@@ -153,7 +151,7 @@ bool isStreamChannelSource (obs_source_t* source)
 	if (type != OBS_SOURCE_TYPE_INPUT)
 		return false;
 
-	obs_data_t* settings = obs_source_get_settings (source);
+	OBSDataAutoRelease settings (obs_source_get_settings (source));
 	if (settings == nullptr)
 		return false;
 
@@ -166,11 +164,11 @@ void removeBrokenStreamChannels ()
 {
 	for (uint32_t channel = kAuxDevice1; channel <= kAuxDevice4; ++channel)
 	{
-		obs_source_t* existingSource = obs_get_output_source (channel);
+		OBSSourceAutoRelease existingSource (obs_get_output_source (channel));
 		if (existingSource)
 		{
 			const std::string_view name = obs_source_get_name (existingSource);
-			obs_data_t* settings = obs_source_get_settings (existingSource);
+			OBSDataAutoRelease settings (obs_source_get_settings (existingSource));
 
 			if (settings == nullptr)
 				continue;
@@ -182,9 +180,6 @@ void removeBrokenStreamChannels ()
 				blog (LOG_INFO, "[MixKey] removing broken channel at index %u", channel);
 				obs_set_output_source (channel, nullptr);
 			}
-
-			obs_data_release (settings);
-			obs_source_release (existingSource);
 		}
 	}
 }
