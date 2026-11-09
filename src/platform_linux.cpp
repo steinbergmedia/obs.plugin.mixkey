@@ -18,7 +18,7 @@ std::string findStreamDeviceId ()
 }
 
 //------------------------------------------------------------------------
-const char* findAudioInputCaptureSourceId ()
+const char* findAudioInputCaptureSourceId()
 {
 	return kAudioInputCaptureSourceId;
 }

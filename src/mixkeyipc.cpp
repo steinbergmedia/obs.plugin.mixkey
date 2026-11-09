@@ -3,9 +3,8 @@
 // distribution and at http://github.com/steinbergmedia/obs.mixkey.plugin/LICENSE
 
 //------------------------------------------------------------------------
-#include "mixkeyipc.h"
 #include "defines.h"
-
+#include "mixkeyipc.h"
 #include "mixkeywidget.h"
 #include "sourcehandling.h"
 
@@ -14,16 +13,20 @@
 #include <QTimer>
 #include <QWidget>
 
+//------------------------------------------------------------------------
 namespace MixKey {
 
 //------------------------------------------------------------------------
 #define kMixKeyOBSIpcId "MixKeyOBSIpc"
 
-constexpr int32_t kReconnectInterval = 2000;
-constexpr int32_t kMaxMessageLength = 30;
+//------------------------------------------------------------------------
+constexpr int kReconnectInterval = 2000;
+constexpr int kMaxMessageLength = 30;
 
 //------------------------------------------------------------------------
 // Client
+//------------------------------------------------------------------------
+
 //------------------------------------------------------------------------
 Client::Client (QObject* object) : QObject (object)
 {
@@ -43,46 +46,41 @@ void Client::initSocket ()
 {
 	socket = new QLocalSocket (this);
 
-	connect (socket, &QLocalSocket::connected, this, [this] () {
-		qDebug ("[MixKey] Connected to MixKey.");
-
+	connect (socket, &QLocalSocket::connected, this, [this] ()
+	{
 		if (onConnectionStateChanged)
 			onConnectionStateChanged (State::kConnected);
 	});
 
-	connect (socket, &QLocalSocket::disconnected, this, [this] () {
-		qDebug ("[MixKey] Disconnected from MixKey.");
-
+	connect (socket, &QLocalSocket::disconnected, this, [this] ()
+	{
 		if (onConnectionStateChanged)
 			onConnectionStateChanged (State::kDisconnected);
 
 		timer->start ();
 	});
 
-	connect (socket, &QLocalSocket::errorOccurred, this, [this] (QLocalSocket::LocalSocketError) {
-		// qDebug ("[MixKey] Socket error occurred. Try again to connect to MixKey.");
+	connect (socket, &QLocalSocket::errorOccurred, this, [this] (QLocalSocket::LocalSocketError)
+	{
 		timer->start ();
 	});
 
-	connect (socket, &QLocalSocket::readyRead, this, [this] () {
+	connect (socket, &QLocalSocket::readyRead, this, [this] ()
+	{
 		QString msg = QString::fromUtf8 (socket->readAll ());
 
 		if (msg == QString (kIPCMessageStatus))
-		{
 			updateStatus ();
-		}
 		else if (msg == QString (kIPCMessageShowDock))
 			showDockWidget ();
 		else if (msg == QString (kIPCMessageRaiseMainWindow))
 			showMainWindow ();
-		}
 		else if (msg == kIPCMessageRepair)
 		{
 			removeBrokenStreamChannels ();
 			createStreamChannelSource ();
 			QTimer::singleShot (1000, [this] () { updateStatus (); });
 		}
-
 	});
 }
 
@@ -93,10 +91,10 @@ void Client::initConnectionTimer ()
 	timer->setInterval (kReconnectInterval);
 	timer->setSingleShot (true);
 
-	connect (timer, &QTimer::timeout, this,
-	         [this] () { //
-		         socket->connectToServer (kMixKeyOBSIpcId);
-	         });
+	connect (timer, &QTimer::timeout, this, [this] ()
+	{
+		socket->connectToServer (kMixKeyOBSIpcId);
+	});
 
 	timer->start ();
 }
@@ -113,14 +111,11 @@ void Client::updateStatus ()
 //------------------------------------------------------------------------
 void Client::sendMessage (const QByteArray& data)
 {
-	QMetaObject::invokeMethod (socket,
-	                           [this, data] () {
-		                           if (socket->state () == QLocalSocket::ConnectedState)
-		                           {
-			                           socket->write (data, kMaxMessageLength);
-		                           }
-	                           },
-	                           Qt::QueuedConnection);
+	QMetaObject::invokeMethod (socket, [this, data] ()
+	{
+		if (socket->state () == QLocalSocket::ConnectedState)
+			socket->write (data + '\n');
+	}, Qt::QueuedConnection);
 }
 
 //------------------------------------------------------------------------
