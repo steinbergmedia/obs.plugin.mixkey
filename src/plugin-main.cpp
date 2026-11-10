@@ -1,22 +1,7 @@
-/*
-MixKey
-Copyright (C) 2026-present Steinberg Media Technologies GmbH
+// This file is part of OBS MixKey Plug-in. It is subject to the license terms
+// in the LICENSE file found in the top-level directory of this
+// distribution and at http://github.com/steinbergmedia/obs.mixkey.plugin/LICENSE
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program. If not, see <https://www.gnu.org/licenses/>
-*/
-
-//------------------------------------------------------------------------
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 #include <util/config-file.h>
@@ -34,11 +19,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #define kMKFirstShown "MKFirstShown"
 
 //------------------------------------------------------------------------
-OBS_DECLARE_MODULE()
-OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
+OBS_DECLARE_MODULE ()
+OBS_MODULE_USE_DEFAULT_LOCALE (PLUGIN_NAME, "en-US")
 
 //------------------------------------------------------------------------
-void frontendCallback (obs_frontend_event event, void *)
+void frontendCallback (obs_frontend_event event, void*)
 {
 	if (event != OBS_FRONTEND_EVENT_FINISHED_LOADING)
 		return;
@@ -76,7 +61,7 @@ bool obs_module_load (void)
 		addFirstShow = !config_get_bool (config, PLUGIN_NAME, kMKFirstShown);
 	if (addFirstShow)
 		obs_frontend_add_event_callback (frontendCallback, nullptr);
-	
+
 	blog (LOG_INFO, "[MixKey] Plugin loaded successfully (version %s)", PLUGIN_VERSION);
 
 	return true;
@@ -86,12 +71,12 @@ bool obs_module_load (void)
 void obs_module_unload (void)
 {
 	MixKey::destroyDockWidget ();
-	
+
 	blog (LOG_INFO, "[MixKey] Plugin unloaded");
 }
 
 //------------------------------------------------------------------------
-MODULE_EXPORT const char* obs_module_name(void)
+MODULE_EXPORT const char* obs_module_name (void)
 {
 	return PLUGIN_NAME " (" PLUGIN_VERSION ")";
 }
