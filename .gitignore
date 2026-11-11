@@ -41,3 +41,14 @@
 *.dwo
 
 **/build_x86_64
+
+# CMake
+.deps
+CMakeFiles
+CMakeCache.txt
+build_macos
+build_x64
+cmake/.CMakeBuildNumber
+
+# macOS
+*.DS_Store

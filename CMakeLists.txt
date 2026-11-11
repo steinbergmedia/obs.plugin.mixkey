@@ -5,7 +5,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCO
 project(${_name} VERSION ${_version})
 
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
-option(ENABLE_QT "Use Qt functionality" OFF)
+option(ENABLE_QT "Use Qt functionality" ON)
 
 include(compilerconfig)
 include(defaults)
@@ -22,8 +22,28 @@ if(ENABLE_FRONTEND_API)
 endif()
 
 if(ENABLE_QT)
-  find_package(Qt6 COMPONENTS Widgets Core)
-  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
+  find_package(Qt6 COMPONENTS Widgets Core Network)
+  
+  # the current obs plugin works with obs 31.1
+  # if we move over to obs 32, we should be able to
+  # remove this hook
+  # it removes AGL from the dependencies
+  # AGL is not part of new mac os (26)
+  if(APPLE AND TARGET WrapOpenGL::WrapOpenGL)
+    get_target_property(_libs
+      WrapOpenGL::WrapOpenGL
+      INTERFACE_LINK_LIBRARIES
+    )
+
+    if(_libs)
+      list(FILTER _libs EXCLUDE REGEX "AGL")
+      set_target_properties(WrapOpenGL::WrapOpenGL
+        PROPERTIES INTERFACE_LINK_LIBRARIES "${_libs}"
+      )
+    endif()
+  endif()
+  
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets Qt6::Network)
   target_compile_options(
     ${CMAKE_PROJECT_NAME}
     PRIVATE $<$<C_COMPILER_ID:Clang,AppleClang>:-Wno-quoted-include-in-framework-header -Wno-comma>
@@ -34,6 +54,37 @@ if(ENABLE_QT)
   )
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE 
+	  src/build_tag.h
+    resources.qrc
+    src/defines.h
+    src/mixkeyipc.cpp
+    src/mixkeyipc.h
+    src/mixkeywidget.cpp
+    src/mixkeywidget.h
+    src/platform.h
+    src/plugin-main.cpp
+    src/sourcehandling.cpp
+    src/sourcehandling.h
+    src/version.h
+)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_sources (${CMAKE_PROJECT_NAME}
+        PRIVATE
+            src/platform_win.cpp
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_sources (${CMAKE_PROJECT_NAME}
+        PRIVATE
+            src/platform_mac.cpp
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_sources (${CMAKE_PROJECT_NAME}
+        PRIVATE
+            src/platform_linux.cpp
+    )
+endif()
+
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
