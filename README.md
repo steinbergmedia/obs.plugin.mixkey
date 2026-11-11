@@ -16,7 +16,7 @@ To clone and create the project, open a command prompt and proceed as follows:
 
 ```sh
 git clone https://github.com/steinbergmedia/obs.plugin.mixkey.git
-mkdir obs.plugin.mixkey
+cd obs.plugin.mixkey
 cmake --preset="windows-x64"
 cmake --build ./build_x64
 ```
@@ -25,7 +25,7 @@ cmake --build ./build_x64
 
 ```sh
 git clone https://github.com/steinbergmedia/obs.plugin.mixkey.git
-mkdir obs.plugin.mixkey
+cd obs.plugin.mixkey
 cmake --preset="macos"
 cmake --build ./build_macos
 ```
@@ -34,7 +34,7 @@ cmake --build ./build_macos
 
 ```sh
 git clone https://github.com/steinbergmedia/obs.plugin.mixkey.git
-mkdir obs.plugin.mixkey
+cd obs.plugin.mixkey
 cmake --preset="ubuntu-x86_64"
 cmake --build ./build_x86_64
 ```
